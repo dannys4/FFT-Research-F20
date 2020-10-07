@@ -1,0 +1,18 @@
+fcn.cpp:47:75: warning: ignoring attributes on template argument ‘double_avx {aka __vector(4) double}’ [-Wignored-attributes]
+     using avx_vec = std::vector<double_avx, SPACE_NAME::Aligned_Allocator<double_avx>>;
+                                                                           ^~~~~~~~~~
+fcn.cpp:47:85: warning: ignoring attributes on template argument ‘double_avx {aka __vector(4) double}’ [-Wignored-attributes]
+     using avx_vec = std::vector<double_avx, SPACE_NAME::Aligned_Allocator<double_avx>>;
+                                                                                     ^~
+fcn.cpp: In constructor ‘sig_space::Signal::Signal(std::vector<double>)’:
+fcn.cpp:55:17: error: no match for call to ‘(sig_space::Signal::avx_vec {aka std::vector<__vector(4) double, sig_space::Aligned_Allocator<__vector(4) double> >}) ()’
+             sig();
+                 ^
+fcn.cpp: In function ‘int main()’:
+fcn.cpp:95:54: error: type/value mismatch at argument 2 in template parameter list for ‘template<class _Tp, class _Alloc> class std::vector’
+     std::vector<double, SPACE_NAME::Aligned_Allocator> test;
+                                                      ^
+fcn.cpp:95:54: note:   expected a type, got ‘Aligned_Allocator’
+fcn.cpp:96:10: error: request for member ‘push_back’ in ‘test’, which is of non-class type ‘int’
+     test.push_back(23.543);
+          ^~~~~~~~~
