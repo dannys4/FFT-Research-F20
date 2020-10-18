@@ -1,6 +1,6 @@
 INCDIR=.
 CC=g++-8
-SIMDARGS=-I$$BOOST_LIB -I$$SIMD_LIB -lnsimd_x86_64 -mavx2
+SIMDARGS= -mavx2
 CFLAGS=-I$(INCDIR) $(SIMDARGS) --std=c++14 -ggdb3 -Wall
 LINKARGS=-lfmt -pthread
 SRCDIR=.

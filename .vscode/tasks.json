@@ -1,0 +1,20 @@
+{
+    "tasks": [
+        {
+            "type":"shell",
+            "label":"make project",
+            "command":"make",
+            "group":{
+                "kind":"build",
+                "isDefault":true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "panel": "new"
+            }
+
+        }
+    ],
+    "version": "2.0.0"
+}

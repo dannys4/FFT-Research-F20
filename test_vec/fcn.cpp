@@ -1,15 +1,19 @@
 #include <cstddef>
 #include <memory>
 #include <vector>
+#include <random>
+#include <functional>
+#include <iostream>
+#include <chrono>
 #include <stdlib.h>
 
 #include <immintrin.h>
 #define SPACE_NAME sig_space
 #define REG_WIDTH 8
-using double_avx = __m256d;
 
 namespace SPACE_NAME {
 
+    using double_avx = __m256d;
 
     template<typename T>
     class Aligned_Allocator{
@@ -45,12 +49,15 @@ namespace SPACE_NAME {
 
     class Signal
     {
-    using avx_vec = std::vector<double_avx, SPACE_NAME::Aligned_Allocator<double_avx>>;
     private:
+        using avx_vec = std::vector<SPACE_NAME::double_avx, SPACE_NAME::Aligned_Allocator<SPACE_NAME::double_avx> >;
         avx_vec sig;
         uint8_t remainder;
+        Signal(avx_vec arr, uint8_t rem) {
+            sig = arr;
+            remainder = rem;
+        }
     public:
-
         Signal(const std::vector<double> input) {
             auto sz = input.size();
             sig = avx_vec();
@@ -58,28 +65,25 @@ namespace SPACE_NAME {
                 sig.push_back(_mm256_setr_pd(input[4*i], input[4*i+1], input[4*i+2], input[4*i+3]));
             }
             switch(input.size() % 4) {
-                case 0:                                                                       remainder = 4; break;
-                case 1: sig[sz/4] = _mm256_setr_pd(input[sz-1], 0          , 0          , 0); remainder = 1; break;
-                case 2: sig[sz/4] = _mm256_setr_pd(input[sz-2], input[sz-1], 0          , 0); remainder = 2; break;
-                case 3: sig[sz/4] = _mm256_setr_pd(input[sz-3], input[sz-2], input[sz-1], 0); remainder = 3; break;
+                case 0:                                                                          remainder = 4; break;
+                case 1: sig.push_back(_mm256_setr_pd(input[sz-1], 0          , 0          , 0)); remainder = 1; break;
+                case 2: sig.push_back(_mm256_setr_pd(input[sz-2], input[sz-1], 0          , 0)); remainder = 2; break;
+                case 3: sig.push_back(_mm256_setr_pd(input[sz-3], input[sz-2], input[sz-1], 0)); remainder = 3; break;
             }
         }
 
-        Signal(avx_vec arr) {
-            sig = arr;
-        }
 
-        double operator[](std::size_t n) {
-            return ((double*) &sig[n/4])[n%4];
+        double& operator[](std::size_t n) {
+            return (reinterpret_cast<double*>(&sig[n/4]))[n%4];
         }
 
         Signal operator+(const Signal& other) {
-            if(other.sig.size() != sig.size()) exit(-1);
-            avx_vec out(sig.size() / 4 + (remainder != 4));
+            if(!(other.sig.size() == sig.size() && other.remainder == remainder)) exit(-1);
+            avx_vec out {};
             for(uint i = 0; i < sig.size(); i++) {
                 out.push_back(_mm256_add_pd(sig[i], other.sig[i]));
             }
-            return Signal(out);
+            return Signal(out, remainder);
         }
 
         uint size() { return 4*(sig.size()-1) + remainder; }
@@ -90,11 +94,40 @@ namespace SPACE_NAME {
 
 
 int main() {
-    std::vector<double> in1 {0.25, 0.50, 0.75, 1.00, 1.25, 1.50};
-    std::vector<double> in2 {0.33, 0.67, 1.00, 1.33, 1.67, 2.00};
-    auto sig1 = sig_space::Signal(in1);
+    using std::chrono::duration_cast;
+    using std::chrono::nanoseconds;
+    typedef std::chrono::high_resolution_clock clock;
 
-    for(uint i = 0; i < in1.size(); i++) {
-        printf("%f\n", sig1[i]);
+    std::vector<double> in1 {0.25, 0.50, 0.75, 1.00};
+    std::vector<double> in2 {0.33, 0.67, 1.00, 1.33};
+    std::vector<double> in3 {};
+    std::vector<double> in4 {};
+    auto sig1 = SPACE_NAME::Signal(in1);
+    auto sig2 = SPACE_NAME::Signal(in2);
+
+    auto rand = std::bind(std::uniform_real_distribution<>{0.0,10.0}, std::default_random_engine{});
+    for(uint64_t i = 0; i < 1+5e7; i++) {
+        in3.push_back(rand());
+        in4.push_back(rand());
+    }
+    auto sig3 = SPACE_NAME::Signal(in3);
+    auto sig4 = SPACE_NAME::Signal(in4);
+    std::vector<double> compare{};
+    std::cout << "sig3.size() = " << sig3.size() << '\n';
+    auto start = clock::now();
+    for(uint64_t i = 0; i < sig3.size(); i++) {
+        compare.push_back(sig3[i]+sig4[i]);
+    }
+    auto end = clock::now();
+    std::cout << "Standard addition took " << duration_cast<nanoseconds>(end-start).count() << "ns\n";
+    start = clock::now();
+    auto sig5 = sig3+sig4;
+    end = clock::now();
+    std::cout << "Vector addition took " << duration_cast<nanoseconds>(end-start).count() << "ns\n";
+    for(uint64_t i = 0; i < sig5.size(); i++) {
+        if(compare[i] != sig5[i]) {
+            printf("THESE AREN'T EQUAL: compare[%d] = %f, sig5[%d] = %f\n", i, compare[i], i, sig5[i]);
+            exit(-1);
+        }
     }
 }
