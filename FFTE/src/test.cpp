@@ -1,29 +1,37 @@
 #include "test.hpp"
 
-#define CHECKSUM 1
-#define ENTRYWISE 0
+#define CHECKSUM 0
+#define ENTRYWISE 1
+#define FFT_LENGTH 15
 
 void check_fft() {
-    int n = 1<<10;
+    int n = FFT_LENGTH;
+    int ell = getNumNodes(FFT_LENGTH);
+    constBiFuncNode root[ell];
+    init_fft_tree(root, FFT_LENGTH);
+
     auto in = (Complex*) malloc(n*sizeof(Complex));
-    auto out_rec = (Complex*) malloc(n*sizeof(Complex));
+    auto out_new = (Complex*) malloc(n*sizeof(Complex));
     auto out_comp = (Complex*) malloc(n*sizeof(Complex));
-    auto out_dft = (Complex*) malloc(n*sizeof(Complex));
+    auto out_ref = (Complex*) malloc(n*sizeof(Complex));
     for(int i = 0; i < n; i++) in[i] = Complex(i, 2*i);
+
+    reference_DFT(n, in, out_ref);
+    root->fptr(in, out_new, 1, 1, root);
 
     // pow3_FFT(n, in, out_rec, 1);
     // pow2_FFT(in, 1, n, out_rec);
     // DFT(n, in, out_dft, 1, 1);
     
 #if CHECKSUM
-    double sum = (out_dft[0] - out_rec[0]).modulus();
-    for(int i = 1; i < n; i++) sum += (out_rec[i]-out_dft[i]).modulus();
+    double sum = (out_ref[0] - out_new[0]).modulus();
+    for(int i = 1; i < n; i++) sum += (out_ref[i]-out_new[i]).modulus();
     std::cout << "Norm of Error: " << sum << "\n";
 #endif
 #if ENTRYWISE
-    for(int i = 0; i < n; i++) std::cout << "i = " << i << ", Err = " << (out_dft[i] - out_rec[i]).modulus() << "\n";
+    for(int i = 0; i < n; i++) std::cout << "out_ref[" << i << "] = " << out_ref[i] << ", out_new[" << i << "] = " << out_new[i] << ", Err = " << (out_ref[i] - out_new[i]).modulus() << "\n";
 #endif
-    free(in); free(out_comp); free(out_rec); free(out_dft);
+    free(in); free(out_comp); free(out_ref); free(out_new);
 }
 
 void time_fft() {

@@ -57,6 +57,7 @@ constexpr uint64_t factor(const uint64_t f) {
 void pow2_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot);
 
 void DFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sLeaf);
+void reference_DFT(uint64_t N, Complex* x, Complex* y);
 
 void composite_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot);
 

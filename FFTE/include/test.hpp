@@ -10,8 +10,6 @@
 #include <complex>
 #include "constTree.hpp"
 
-#define FFT_LENGTH 15120
-
 void check_fft();
 volatile void check_fft_tree();
 

@@ -77,6 +77,10 @@ void DFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode*
     DFT_helper(sLeaf->sz, x, y, s_in, s_out);
 }
 
+void reference_DFT(uint64_t N, Complex* x, Complex* y) {
+    DFT_helper(N, x, y, 1, 1);
+}
+
 void composite_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot) {
     uint64_t N = sRoot->sz;
     constBiFuncNode* left = sRoot + sRoot->left;
