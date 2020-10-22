@@ -1,5 +1,4 @@
 #include "test.hpp"
-#include "constTree.hpp"
 
 #define CHECKSUM 1
 #define ENTRYWISE 0
@@ -13,8 +12,9 @@ void check_fft() {
     for(int i = 0; i < n; i++) in[i] = Complex(i, 2*i);
 
     // pow3_FFT(n, in, out_rec, 1);
-    pow2_FFT(in, 1, n, out_rec);
-    DFT(n, in, out_dft, 1, 1);
+    // pow2_FFT(in, 1, n, out_rec);
+    // DFT(n, in, out_dft, 1, 1);
+    
 #if CHECKSUM
     double sum = (out_dft[0] - out_rec[0]).modulus();
     for(int i = 1; i < n; i++) sum += (out_rec[i]-out_dft[i]).modulus();
@@ -36,7 +36,7 @@ void time_fft() {
     auto out = (Complex*) malloc(n*sizeof(Complex));
     for(uint64_t i = 0; i < n; i++) in[i] = Complex(i, 2*i);
     auto start = clock::now();
-    pow3_FFT(n, in, out, 1);
+    // pow3_FFT(n, in, out, 1);
     auto end = clock::now();
     auto myfft = duration_cast<nanoseconds>(end-start).count();
     std::cout << "Elapsed time is " << myfft*1.e-9 << "s\n";
@@ -122,3 +122,14 @@ void time_const_tree() {
     end = clock::now();
     std::cerr << "Known at run time took " << duration_cast<nanoseconds>(end-start).count() << "ns\n";
 }
+
+ volatile void check_fft_tree() {
+    uint64_t N = 15120;
+    uint ell = getNumNodes(N);
+    constBiFuncNode root[ell];
+    init_fft_tree(root, N);
+    std::cout << "\t\t";
+    printTree(root);
+    std::cout << "\nExpected\t15120: (16, 945: (27, 35: (5, 7)))\n";
+}
+

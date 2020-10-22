@@ -1,7 +1,7 @@
 INCDIR=./include
 CC=g++
 SIMDARGS= -mfma -mavx2
-CFLAGS=-I$(INCDIR) $(SIMDARGS) -ggdb3 -Wall -O3
+CFLAGS=-I$(INCDIR) $(SIMDARGS) -ggdb3 -Wall
 SRCDIR=./src
 OBJDIR=$(SRCDIR)/obj
 
@@ -17,7 +17,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
 run: $(OBJ)
-	$(CC) $(LINKARGS) $(CFLAGS) -o $@ $^ $(LIBS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
 .PHONY: clean all default
 

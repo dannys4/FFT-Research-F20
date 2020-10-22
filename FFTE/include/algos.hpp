@@ -3,13 +3,64 @@
 
 #include <cstdint>
 #include <cmath>
-#include "utils.hpp"
+#include "complex.hpp"
 #include <iostream>
 
-void pow2_FFT(Complex* sig_in, uint64_t stride, uint64_t size, Complex* sig_out);
-void DFT(uint64_t size, Complex* sig_in, Complex* sig_out, uint64_t s_in, uint64_t s_out);
-void composite_FFT(uint64_t N, Complex* x, Complex* y, uint64_t s_in, uint64_t s_out);
-void pow3_FFT(uint64_t N, Complex* x, Complex* y, uint64_t s_in);
-void pow2_FFT_it(Complex* sig_in, uint64_t size, Complex* sig_out);
+class constBiFuncNode;
+
+// This is the standard fft function call:
+// N, x, y, s_in, s_out.
+// N     = input signal length
+// x     = input signal
+// y     = output signal
+// s_in  = the distance (stride) between each input
+// s_out = the distance (stride) between each output
+using fft_fptr = void (*)(Complex*, Complex*, uint64_t, uint64_t, constBiFuncNode*);
+
+template<typename T>
+class constBiNode {
+    private:
+    public:
+        T elem;
+        uint64_t left = 0;
+        uint64_t right = 0;
+        constexpr constBiNode() = default;
+        constexpr constBiNode(const T e) {elem = e;}
+};
+
+class constBiFuncNode {
+    public:
+        fft_fptr fptr = nullptr;
+        uint64_t sz = 0;
+        uint64_t left = 0;
+        uint64_t right = 0;
+        constexpr constBiFuncNode() = default;
+};
+
+
+
+#define FACTORS_LEN 15
+static constexpr uint64_t factors[FACTORS_LEN] {4, 2, 3, 5, 7, 11, 13, 16, 17, 19, 23, 29, 31, 37, 41};
+
+constexpr uint64_t factor(const uint64_t f) {
+    uint64_t k = 0;
+    for(; k < FACTORS_LEN; k++) {
+        if( f % factors[k] == 0) return factors[k];
+    }
+    for(k = factors[k - 1]; k*k < f; k+=2) {
+        if( f % k == 0 ) return k;
+    }
+    return f;
+}
+
+
+void pow2_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot);
+
+void DFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sLeaf);
+
+void composite_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot);
+
+void pow3_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot);
+
 
 #endif
