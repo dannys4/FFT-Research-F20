@@ -1,8 +1,8 @@
 #include "test.hpp"
 
-#define CHECKSUM 0
-#define ENTRYWISE 1
-#define FFT_LENGTH 15
+#define CHECKSUM 1
+#define ENTRYWISE 0
+#define FFT_LENGTH 27*128*35
 
 void check_fft() {
     int n = FFT_LENGTH;
@@ -14,9 +14,11 @@ void check_fft() {
     auto out_new = (Complex*) malloc(n*sizeof(Complex));
     auto out_comp = (Complex*) malloc(n*sizeof(Complex));
     auto out_ref = (Complex*) malloc(n*sizeof(Complex));
-    for(int i = 0; i < n; i++) in[i] = Complex(i, 2*i);
+    for(int i = 0; i < n; i++) in[i] = Complex(1., 2.);
 
-    reference_DFT(n, in, out_ref);
+    // reference_DFT(n, in, out_ref);
+    reference_composite_FFT(n, in, out_ref, 1, 1);
+    // reference_composite_FFT(n, in, out_new, 1, 1);
     root->fptr(in, out_new, 1, 1, root);
 
     // pow3_FFT(n, in, out_rec, 1);

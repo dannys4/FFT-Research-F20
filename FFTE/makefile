@@ -1,7 +1,7 @@
 INCDIR=./include
 CC=g++
 SIMDARGS= -mfma -mavx2
-CFLAGS=-I$(INCDIR) $(SIMDARGS) -ggdb3 -Wall
+CFLAGS=-I$(INCDIR) $(SIMDARGS) -ggdb3 -Wall -O3
 SRCDIR=./src
 OBJDIR=$(SRCDIR)/obj
 

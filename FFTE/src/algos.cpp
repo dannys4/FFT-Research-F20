@@ -2,7 +2,7 @@
 
 static constexpr uint8_t BitReverseTable256[256] = 
 {
-#   define R2(n)     n,     n + 2*64,     n + 1*64,     n + 3*64
+#   define R2(n)    n,     n + 2*64,     n + 1*64,     n + 3*64
 #   define R4(n) R2(n), R2(n + 2*16), R2(n + 1*16), R2(n + 3*16)
 #   define R6(n) R4(n), R4(n + 2*4 ), R4(n + 1*4 ), R4(n + 3*4 )
     R6(0), R6(2), R6(1), R6(3)
@@ -40,9 +40,11 @@ void pow2_FFT_helper(uint64_t N, Complex* x, Complex* y, uint64_t s_in, uint64_t
     Complex w {cos(2*M_PI/(double) N), -sin(2*M_PI/(double) N)};
     Complex wj {1, 0};
     for(int j = 0; j < m; j++) {
-        Complex y_j = y[j*s_out];
-        y[j] = y_j + wj*y[(j+m)*s_out];
-        y[j+m] = y_j - wj*y[(j+m)*s_out];
+        int j_stride = j*s_out;
+        int jm_stride = (j+m)*s_out;
+        Complex y_j = y[j_stride];
+        y[j_stride] = y_j + wj*y[jm_stride];
+        y[jm_stride] = y_j - wj*y[jm_stride];
         wj = w*wj;
     }
 }
@@ -56,8 +58,8 @@ void DFT_helper(uint64_t size, Complex* sig_in, Complex* sig_out, uint64_t s_in,
     Complex wk = w0;
     Complex wkn = w0;
     Complex tmp = sig_in[0];
-    for(uint n = 0; n < size; n++) {
-        tmp = tmp + sig_in[n];
+    for(uint n = 1; n < size; n++) {
+        tmp = tmp + sig_in[n*s_in];
     }
     sig_out[0] = tmp;
 
@@ -104,11 +106,33 @@ void composite_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constB
     // Don't need n1 for the second transform as it's just the indexer.
     // Take strides of N2 since z is allocated on the fly in this function for N.
     for(uint k2 = 0; k2 < N2; k2++) {
-        left->fptr(z+k2, y+k2, N2, N2*s_out, left);
+        left->fptr(z+k2, y+k2*s_out, N2, N2*s_out, left);
     }
     free(z);
 }
 
+void reference_composite_FFT(uint64_t N, Complex* x, Complex* y, uint64_t s_in, uint64_t s_out) {
+    uint N1 = factor(N);
+    uint N2 = N/N1;
+    if(N1 == N) {
+        DFT_helper(N, x, y, s_in, s_out);
+        return;
+    }
+    Complex* z = (Complex*) malloc(N*sizeof(Complex));
+
+    reference_composite_FFT(N2, x, z, N1*s_in, 1);
+    for(uint n1 = 1; n1 < N1; n1++) {
+        reference_composite_FFT(N2, x+n1*s_in, z+N2*n1, N1*s_in, 1);
+        for(uint k2 = 1; k2 < N2; k2++) {
+            z[n1*N2 + k2] = z[n1*N2 + k2]*omega(n1*k2, N);
+        }
+    }
+    // Don't need n1 for the second transform as it's just the indexer. Take strides of N2
+    for(uint k2 = 0; k2 < N2; k2++) {
+        reference_composite_FFT(N1, z+k2, y+k2*s_out, N2, N2*s_out);
+    }
+    free(z);
+}
 
 void pow3_FFT_helper(uint64_t N, Complex* x, Complex* y, uint64_t s_in, uint64_t s_out) {
     Complex plus60 {-0.5, -sqrt(3)/2.};

@@ -60,6 +60,7 @@ void DFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode*
 void reference_DFT(uint64_t N, Complex* x, Complex* y);
 
 void composite_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot);
+void reference_composite_FFT(uint64_t N, Complex* x, Complex* y, uint64_t s_in, uint64_t s_out);
 
 void pow3_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot);
 

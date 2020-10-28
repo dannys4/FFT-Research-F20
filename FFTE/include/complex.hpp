@@ -8,6 +8,10 @@
 class Complex {
     __m128d var;
     public:
+        Complex() {
+            var = _mm_setzero_pd();
+        }
+
         Complex(double a, double b) {
             var = _mm_set_pd(b, a);
         }
