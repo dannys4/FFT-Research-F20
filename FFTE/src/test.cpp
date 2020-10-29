@@ -10,10 +10,10 @@
  * inaccuracies), there might be slight discrepencies
  */
 void check_fft() {
-    int n = FFT_LENGTH;
-    int ell = getNumNodes(FFT_LENGTH);
+    const int n = 27*128*35;
+    int ell = getNumNodes(n);
     constBiFuncNode root[ell];
-    init_fft_tree(root, FFT_LENGTH);
+    init_fft_tree(root, n);
 
     auto in = (Complex*) malloc(n*sizeof(Complex));
     auto out_new = (Complex*) malloc(n*sizeof(Complex));
@@ -67,6 +67,7 @@ void check_fft_tree() {
     printTree(root);
     std::cout << "\nExpected\t15120: (16, 945: (27, 35: (5, 7)))\n";
 }
+
 
 /*
  * Functions to clock my running times. These check in different cases
