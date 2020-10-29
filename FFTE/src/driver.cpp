@@ -1,16 +1,7 @@
 #include "test.hpp"
 
-void helper(Complex& n) {
-    if(n == NULL) {
-        std::cout << "successful!\n";
-    }
-    else
-    {
-        std::cout << "unsuccessful :(\n";
-    }
-    
-}
-
 int main() {
-    time_omega();
+    Omega w{};
+    if(w()) std::cout << "w is not null\n";
+    else std::cout << "w is null\n";
 }

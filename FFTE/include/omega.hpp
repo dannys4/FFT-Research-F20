@@ -8,7 +8,7 @@ enum Direction {forward, inverse};
 class Omega {
     private:
         uint64_t N;
-        Complex* data;
+        Complex* data = nullptr;
 
         Complex initForward() {
             double a = 2.*M_PI*(1.)/((double) N);
@@ -21,6 +21,7 @@ class Omega {
             return w0;
         }
     public:
+        Omega() = default;
         Omega(uint64_t length, Direction d) {
             N = length;
             Complex w0;
@@ -35,6 +36,8 @@ class Omega {
                 w = w*w0;
             }
         }
+
+        bool operator()() {return data != nullptr;}
 
         ~Omega() {
             free(data);
