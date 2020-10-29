@@ -1,9 +1,14 @@
 #include "test.hpp"
 
-#define CHECKSUM 1
-#define ENTRYWISE 0
+#define CHECKSUM_COMP 1
+#define ENTRYWISE_COMP 0
 #define FFT_LENGTH 27*128*35
 
+/*
+ * Functions to test veracity of outputs. These check against references
+ * or expected values to get their answers, so sometimes (due to floating point
+ * inaccuracies), there might be slight discrepencies
+ */
 void check_fft() {
     int n = FFT_LENGTH;
     int ell = getNumNodes(FFT_LENGTH);
@@ -16,26 +21,59 @@ void check_fft() {
     auto out_ref = (Complex*) malloc(n*sizeof(Complex));
     for(int i = 0; i < n; i++) in[i] = Complex(1., 2.);
 
-    // reference_DFT(n, in, out_ref);
     reference_composite_FFT(n, in, out_ref, 1, 1);
-    // reference_composite_FFT(n, in, out_new, 1, 1);
     root->fptr(in, out_new, 1, 1, root);
 
-    // pow3_FFT(n, in, out_rec, 1);
-    // pow2_FFT(in, 1, n, out_rec);
-    // DFT(n, in, out_dft, 1, 1);
     
-#if CHECKSUM
+#if CHECKSUM_COMP
     double sum = (out_ref[0] - out_new[0]).modulus();
     for(int i = 1; i < n; i++) sum += (out_ref[i]-out_new[i]).modulus();
     std::cout << "Norm of Error: " << sum << "\n";
 #endif
-#if ENTRYWISE
+#if ENTRYWISE_COMP
     for(int i = 0; i < n; i++) std::cout << "out_ref[" << i << "] = " << out_ref[i] << ", out_new[" << i << "] = " << out_new[i] << ", Err = " << (out_ref[i] - out_new[i]).modulus() << "\n";
 #endif
     free(in); free(out_comp); free(out_ref); free(out_new);
 }
 
+void check_omega() {
+    uint64_t N1 = 27;
+    uint64_t N2 = 128*5;
+    uint64_t N3 = 7;
+    uint64_t N = N1*N2*N3;
+    Omega w (N, Direction::forward);
+    double sum = 0.;
+    for(uint64_t i = 0; i < N; i++) {
+        sum += (w(i, N)-omega(i, N)).modulus();
+    }
+    std::cout << "L2 Error in initialization with N = " << N << " is " << sum << "\n";
+    sum = 0.;
+    for(uint64_t i = 0; i < N1; i++) sum += (w(i, N1) - omega(i, N1)).modulus();
+    std::cout << "L2 Error in Checking against N1 = " << N1 << " is " << sum << "\n";
+    sum = 0.;
+    for(uint64_t i = 0; i < N2; i++) sum += (w(i, N2) - omega(i, N2)).modulus();
+    std::cout << "L2 Error in Checking against N2 = " << N2 << " is " << sum << "\n";
+    sum = 0.;
+    for(uint64_t i = 0; i < N3; i++) sum += (w(i, N3) - omega(i, N3)).modulus();
+    std::cout << "L2 Error in Checking against N3 = " << N3 << " is " << sum << "\n";
+}
+
+void check_fft_tree() {
+    uint64_t N = 15120;
+    uint ell = getNumNodes(N);
+    constBiFuncNode root[ell];
+    init_fft_tree(root, N);
+    std::cout << "\t\t";
+    printTree(root);
+    std::cout << "\nExpected\t15120: (16, 945: (27, 35: (5, 7)))\n";
+}
+
+/*
+ * Functions to clock my running times. These check in different cases
+ * to see if what I'm doing is actually sufficiently fast
+ */
+
+// Deprecated function evaluations. Will fix in future.
 void time_fft() {
     using std::chrono::duration_cast;
     using std::chrono::nanoseconds;
@@ -52,7 +90,6 @@ void time_fft() {
     std::cout << "Elapsed time is " << myfft*1.e-9 << "s\n";
     free(in); free(out);
 }
-
 
 void time_complex_mult() {
     using std::chrono::duration_cast;
@@ -133,13 +170,43 @@ void time_const_tree() {
     std::cerr << "Known at run time took " << duration_cast<nanoseconds>(end-start).count() << "ns\n";
 }
 
- volatile void check_fft_tree() {
-    uint64_t N = 15120;
-    uint ell = getNumNodes(N);
-    constBiFuncNode root[ell];
-    init_fft_tree(root, N);
-    std::cout << "\t\t";
-    printTree(root);
-    std::cout << "\nExpected\t15120: (16, 945: (27, 35: (5, 7)))\n";
-}
+void time_omega() {
+    using std::chrono::duration_cast;
+    using std::chrono::nanoseconds;
+    typedef std::chrono::high_resolution_clock clock;
 
+    uint64_t N_factors = 10;
+    uint Njmax = 15;
+    std::vector<uint64_t> Nvec {};
+    uint64_t N = 1;
+    auto rand = std::bind(std::uniform_int_distribution<>{1,Njmax}, std::default_random_engine{});
+    for(uint i = 0; i < N_factors; i++) {
+        uint tmp = rand();
+        N *= tmp;
+        Nvec.push_back(tmp);
+    }
+    Omega w (N, Direction::forward);
+
+    auto start = clock::now();
+    for(auto& Nj : Nvec) {
+        for(uint64_t i = 0; i < Nj; i++) {
+            Complex w0 = omega(i, Nj);
+            if(Nj == 16) std::cout << w0 << "\n";
+        }
+    }
+    auto end = clock::now();
+    auto naive_twiddle = duration_cast<nanoseconds>(end-start).count();
+    std::cout << "Naive implementation elapsed time is " << naive_twiddle*1.e-9 << "s\n";
+
+    start = clock::now();
+    for(auto& Nj : Nvec) {
+        for(uint64_t i = 0; i < Nj; i++) {
+            Complex w0 = w(i, Nj);
+            if(Nj == 16) std::cout << w0 << "\n";
+        }
+    }
+    end = clock::now();
+    auto new_twiddle = duration_cast<nanoseconds>(end - start).count();
+    std::cout << "Class-based implementation of seconds is " << new_twiddle*1.e-9 << "s\n";
+    
+}

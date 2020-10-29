@@ -53,7 +53,7 @@ constexpr uint64_t factor(const uint64_t f) {
     return f;
 }
 
-
+Complex omega(uint power, uint N);
 void pow2_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot);
 
 void DFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sLeaf);

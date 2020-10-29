@@ -9,12 +9,15 @@
 #include <chrono>
 #include <complex>
 #include "constTree.hpp"
+#include "omega.hpp"
 
 void check_fft();
-volatile void check_fft_tree();
+void check_fft_tree();
+void check_omega();
 
 void time_fft();
 void time_complex_mult();
 void time_const_tree();
+void time_omega();
 
 #endif

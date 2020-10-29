@@ -30,7 +30,7 @@ class Omega {
             }
             Complex w = w0;
             data = (Complex*) malloc(N*sizeof(Complex));
-            for(int k = 0; k < N; k++) {
+            for(uint64_t k = 0; k < N; k++) {
                 data[k] = w;
                 w = w*w0;
             }
