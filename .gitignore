@@ -8,6 +8,7 @@
 /**/.vscode
 /**/*.o
 /**/run
+/**/callgrind.out.*
 
 # make sure to include any gitignore files
 !.gitignore

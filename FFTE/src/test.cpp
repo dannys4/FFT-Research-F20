@@ -10,7 +10,7 @@
  * inaccuracies), there might be slight discrepencies
  */
 void check_fft() {
-    const int n = 25;
+    const int n = FFT_LENGTH;
     int ell = getNumNodes(n);
     constBiFuncNode root[ell];
     init_fft_tree(root, n);
@@ -21,7 +21,7 @@ void check_fft() {
     auto out_ref = (Complex*) malloc(n*sizeof(Complex));
     for(int i = 0; i < n; i++) in[i] = Complex(1., 2.);
 
-    reference_DFT(n, in, out_ref);
+    reference_composite_FFT(n, in, out_ref, 1, 1);
     Omega w(Direction::forward);
     root->fptr(in, out_new, 1, 1, root, w);
 
@@ -92,22 +92,50 @@ void check_fft_tree() {
  * to see if what I'm doing is actually sufficiently fast
  */
 
-// Deprecated function evaluations. Will fix in future.
 void time_fft() {
     using std::chrono::duration_cast;
     using std::chrono::nanoseconds;
     typedef std::chrono::high_resolution_clock clock;
 
-    uint64_t n = 3*3*1594323;
+    const int n = FFT_LENGTH;
+    int ell = getNumNodes(n);
+    constBiFuncNode root[ell];
+    init_fft_tree(root, n);
+
     auto in = (Complex*) malloc(n*sizeof(Complex));
-    auto out = (Complex*) malloc(n*sizeof(Complex));
+    auto out_ref = (Complex*) malloc(n*sizeof(Complex));
+    auto out_new = (Complex*) malloc(n*sizeof(Complex));
+
     for(uint64_t i = 0; i < n; i++) in[i] = Complex(i, 2*i);
+    Omega w(Direction::forward);
+
+    int Ntrials = 10;
+
     auto start = clock::now();
-    // pow3_FFT(n, in, out, 1);
+    root->fptr(in, out_new, 1, 1, root, w);
     auto end = clock::now();
-    auto myfft = duration_cast<nanoseconds>(end-start).count();
-    std::cout << "Elapsed time is " << myfft*1.e-9 << "s\n";
-    free(in); free(out);
+    auto new_fft = duration_cast<nanoseconds>(end-start).count();
+    for(int i = 1; i < Ntrials; i++) {
+        start = clock::now();
+        root->fptr(in, out_new, 1, 1, root, w);
+        end = clock::now();
+        new_fft += duration_cast<nanoseconds>(end-start).count();
+        if(in == (Complex*) 0x12345) std::cout << "this shouldn't print\n";
+    }
+    
+    // start = clock::now();
+    // reference_composite_FFT(n, in, out_new, 1, 1);
+    // end = clock::now();
+    // auto ref_fft = duration_cast<nanoseconds>(end-start).count();
+    // for(int i = 1; i < Ntrials; i++) {
+    //     start = clock::now();
+    //     reference_composite_FFT(n, in, out_new, 1, 1);
+    //     end = clock::now();
+    //     ref_fft += duration_cast<nanoseconds>(end-start).count();
+    //     if(in == (Complex*) 0x12345) std::cout << "this shouldn't print\n";
+    // }
+    // std::cout << "The newest tranform takes " << (new_fft*1.e-9)/((double) Ntrials) << "s, where the reference takes " << (ref_fft*1e-9)/((double) Ntrials) << "s\n";
+    free(in); free(out_ref); free(out_new);
 }
 
 void time_complex_mult() {

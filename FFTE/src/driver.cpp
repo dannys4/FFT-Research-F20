@@ -1,5 +1,5 @@
 #include "test.hpp"
 
 int main() {
-    time_omega();
+    time_fft();
 }
