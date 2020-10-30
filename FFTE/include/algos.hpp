@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cmath>
 #include "complex.hpp"
+#include "omega.hpp"
 #include <iostream>
 
 class constBiFuncNode;
@@ -15,7 +16,7 @@ class constBiFuncNode;
 // y     = output signal
 // s_in  = the distance (stride) between each input
 // s_out = the distance (stride) between each output
-using fft_fptr = void (*)(Complex*, Complex*, uint64_t, uint64_t, constBiFuncNode*);
+using fft_fptr = void (*)(Complex*, Complex*, uint64_t, uint64_t, constBiFuncNode*, Omega&);
 
 template<typename T>
 class constBiNode {
@@ -54,15 +55,15 @@ constexpr uint64_t factor(const uint64_t f) {
 }
 
 Complex omega(uint power, uint N);
-void pow2_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot);
+void pow2_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot, Omega& w);
 
-void DFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sLeaf);
+void DFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sLeaf, Omega& w);
 void reference_DFT(uint64_t N, Complex* x, Complex* y);
 
-void composite_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot);
+void composite_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot, Omega& w);
 void reference_composite_FFT(uint64_t N, Complex* x, Complex* y, uint64_t s_in, uint64_t s_out);
 
-void pow3_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot);
+void pow3_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot, Omega& w);
 
 
 #endif

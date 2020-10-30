@@ -29,28 +29,44 @@ Complex omega(uint power, uint N) {
     return ret;
 }
 
-void pow2_FFT_helper(uint64_t N, Complex* x, Complex* y, uint64_t s_in, uint64_t s_out) {
+void pow2_FFT_helper(uint64_t N, Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, Omega& w) {
     if(N == 1) {
         *y = *x;
         return;
     }
     int m = N/2;
-    pow2_FFT_helper(m, x, y, s_in*2, s_out);
-    pow2_FFT_helper(m, x+s_in, y+s_out*m, s_in*2, s_out);
-    Complex w {cos(2*M_PI/(double) N), -sin(2*M_PI/(double) N)};
-    Complex wj {1, 0};
+    pow2_FFT_helper(m, x, y, s_in*2, s_out, w);
+    pow2_FFT_helper(m, x+s_in, y+s_out*m, s_in*2, s_out, w);
     for(int j = 0; j < m; j++) {
+        Complex wj = w(j, N);
         int j_stride = j*s_out;
         int jm_stride = (j+m)*s_out;
         Complex y_j = y[j_stride];
         y[j_stride] = y_j + wj*y[jm_stride];
         y[jm_stride] = y_j - wj*y[jm_stride];
-        wj = w*wj;
     }
 }
 
-void pow2_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot) {
-    pow2_FFT_helper(sRoot->sz, x, y, s_in, s_out);
+void pow2_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot, Omega& w) {
+    const uint64_t N = sRoot->sz;
+    if(!w()) w(N);
+    pow2_FFT_helper(N, x, y, s_in, s_out, w);
+}
+
+void DFT_helper(uint64_t size, Complex* sig_in, Complex* sig_out, uint64_t s_in, uint64_t s_out, Omega& w) {
+    Complex tmp = sig_in[0];
+    for(uint n = 1; n < size; n++) {
+        tmp = tmp + sig_in[n*s_in];
+    }
+    sig_out[0] = tmp;
+
+    for(uint k = 1; k < size; k++) {
+        tmp = sig_in[0];
+        for(uint n = 1; n < size; n++) {
+            tmp = tmp + w(k, n, size)*sig_in[n*s_in];
+        }
+        sig_out[k*s_out] = tmp;
+    }
 }
 
 void DFT_helper(uint64_t size, Complex* sig_in, Complex* sig_out, uint64_t s_in, uint64_t s_out) {
@@ -75,38 +91,40 @@ void DFT_helper(uint64_t size, Complex* sig_in, Complex* sig_out, uint64_t s_in,
     }
 }
 
-void DFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sLeaf) {
-    DFT_helper(sLeaf->sz, x, y, s_in, s_out);
+void DFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sLeaf, Omega& w) {
+    if(!w()) DFT_helper(sLeaf->sz, x, y, s_in, s_out);
+    else DFT_helper(sLeaf->sz, x, y, s_in, s_out, w);
 }
 
 void reference_DFT(uint64_t N, Complex* x, Complex* y) {
     DFT_helper(N, x, y, 1, 1);
 }
 
-void composite_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot) {
+void composite_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot, Omega& w) {
     uint64_t N = sRoot->sz;
+    if(!w()) w(N);
     constBiFuncNode* left = sRoot + sRoot->left;
     constBiFuncNode* right = sRoot + sRoot->right;
     uint N1 = left->sz;
     uint N2 = right->sz;
 
     if(N1 == N) {
-        DFT(x, y, s_in, s_out, sRoot);
+        DFT(x, y, s_in, s_out, sRoot, w);
         return;
     }
     Complex* z = (Complex*) malloc(N*sizeof(Complex));
 
     for(uint n1 = 0; n1 < N1; n1++) {
-        right->fptr(x+n1*s_in, z+N2*n1, N1*s_in, 1, right);
+        right->fptr(x+n1*s_in, z+N2*n1, N1*s_in, 1, right, w);
         for(uint k2 = 1; (k2 < N2) && (n1 > 0); k2++) {
-            z[n1*N2 + k2] = z[n1*N2 + k2]*omega(n1*k2, N);
+            z[n1*N2 + k2] = z[n1*N2 + k2]*w(n1, k2, N);
         }
     }
 
     // Don't need n1 for the second transform as it's just the indexer.
     // Take strides of N2 since z is allocated on the fly in this function for N.
     for(uint k2 = 0; k2 < N2; k2++) {
-        left->fptr(z+k2, y+k2*s_out, N2, N2*s_out, left);
+        left->fptr(z+k2, y+k2*s_out, N2, N2*s_out, left, w);
     }
     free(z);
 }
@@ -134,19 +152,17 @@ void reference_composite_FFT(uint64_t N, Complex* x, Complex* y, uint64_t s_in, 
     free(z);
 }
 
-void pow3_FFT_helper(uint64_t N, Complex* x, Complex* y, uint64_t s_in, uint64_t s_out) {
-    Complex plus60 {-0.5, -sqrt(3)/2.};
-    Complex minus60 {-0.5, sqrt(3)/2.};
+void pow3_FFT_helper(uint64_t N, Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, Omega& w, Complex& plus120, Complex& minus120) {
     if(N == 3) {
         y[0] = x[0] + x[s_in] + x[2*s_in];
-        y[s_out] = x[0] + plus60*x[s_in] + minus60*x[2*s_in];
-        y[2*s_out] = x[0] + minus60*x[s_in] + plus60*x[2*s_in];
+        y[s_out] = x[0] + plus120*x[s_in] + minus120*x[2*s_in];
+        y[2*s_out] = x[0] + minus120*x[s_in] + plus120*x[2*s_in];
         return;
     }
     uint64_t Nprime = N/3;
-    pow3_FFT_helper(Nprime, x, y, s_in*3, s_out);
-    pow3_FFT_helper(Nprime, x+s_in, y+Nprime*s_out, s_in*3, s_out);
-    pow3_FFT_helper(Nprime, x+2*s_in, y+2*Nprime*s_out, s_in*3, s_out);
+    pow3_FFT_helper(Nprime, x, y, s_in*3, s_out, w, plus120, minus120);
+    pow3_FFT_helper(Nprime, x+s_in, y+Nprime*s_out, s_in*3, s_out, w, plus120, minus120);
+    pow3_FFT_helper(Nprime, x+2*s_in, y+2*Nprime*s_out, s_in*3, s_out, w, plus120, minus120);
     Complex w1 {cos(2*M_PI/(double) N), -sin(2*M_PI/(double) N)};
     Complex w2 = w1 * w1;
     Complex wk1 {1, 0};
@@ -159,16 +175,22 @@ void pow3_FFT_helper(uint64_t N, Complex* x, Complex* y, uint64_t s_in, uint64_t
         Complex tmpk_p_1 = y[k2];
         Complex tmpk_p_2 = y[k3];
         y[k1] = tmpk + wk1*tmpk_p_1 + wk2*tmpk_p_2;
-        y[k2] = tmpk + plus60*wk1*tmpk_p_1 + minus60*wk2*tmpk_p_2;
-        y[k3] = tmpk + minus60*wk1*tmpk_p_1 + plus60*wk2*tmpk_p_2;
+        y[k2] = tmpk + plus120*wk1*tmpk_p_1 + minus120*wk2*tmpk_p_2;
+        y[k3] = tmpk + minus120*wk1*tmpk_p_1 + plus120*wk2*tmpk_p_2;
         wk1 = wk1*w1;
         wk2 = wk2*w2;
     }
 }
 
-// Creates the appropriate interface for the power of 3 sized FFT
-void pow3_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot) {
-    pow3_FFT_helper(sRoot->sz, x, y, s_in, s_out);
+void pow3_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot, Omega& w) {
+    const uint64_t N = sRoot->sz;
+    if(!w()) w(N);
+    Complex plus120 {-0.5, -sqrt(3)/2.};
+    Complex minus120 {-0.5, sqrt(3)/2.};
+    switch(w.dir) {
+        case Direction::forward: pow3_FFT_helper(N, x, y, s_in, s_out, w, plus120, minus120); break;
+        case Direction::inverse: pow3_FFT_helper(N, x, y, s_in, s_out, w, minus120, plus120); break;
+    }
 }
 
 // DOES NOT WORK, DO NOT USE

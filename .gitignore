@@ -1,0 +1,13 @@
+# Exclude everything from root directory
+/*
+
+# Re-include everything from the FFTE folder
+!/FFTE/
+
+# Exclude any files looking like this
+/**/.vscode
+/**/*.o
+/**/run
+
+# make sure to include any gitignore files
+!.gitignore

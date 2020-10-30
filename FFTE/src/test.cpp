@@ -10,7 +10,7 @@
  * inaccuracies), there might be slight discrepencies
  */
 void check_fft() {
-    const int n = 27*128*35;
+    const int n = 25;
     int ell = getNumNodes(n);
     constBiFuncNode root[ell];
     init_fft_tree(root, n);
@@ -21,8 +21,9 @@ void check_fft() {
     auto out_ref = (Complex*) malloc(n*sizeof(Complex));
     for(int i = 0; i < n; i++) in[i] = Complex(1., 2.);
 
-    reference_composite_FFT(n, in, out_ref, 1, 1);
-    root->fptr(in, out_new, 1, 1, root);
+    reference_DFT(n, in, out_ref);
+    Omega w(Direction::forward);
+    root->fptr(in, out_new, 1, 1, root, w);
 
     
 #if CHECKSUM_COMP
@@ -38,23 +39,40 @@ void check_fft() {
 
 void check_omega() {
     uint64_t N1 = 27;
-    uint64_t N2 = 128*5;
+    uint64_t N2 = 5;
     uint64_t N3 = 7;
     uint64_t N = N1*N2*N3;
     Omega w (N, Direction::forward);
     double sum = 0.;
     for(uint64_t i = 0; i < N; i++) {
-        sum += (w(i, N)-omega(i, N)).modulus();
+        for(uint64_t j = 0; j < N; j++) sum += (w(i, j, N)-omega(i*j, N)).modulus();
     }
     std::cout << "L2 Error in initialization with N = " << N << " is " << sum << "\n";
+    
     sum = 0.;
-    for(uint64_t i = 0; i < N1; i++) sum += (w(i, N1) - omega(i, N1)).modulus();
+    for(uint64_t i = 0; i < N1; i++) {
+        for(uint64_t j = 0; j < N1; j++) sum += (w(i, j, N1)-omega(i*j, N1)).modulus();
+    }
     std::cout << "L2 Error in Checking against N1 = " << N1 << " is " << sum << "\n";
+    
     sum = 0.;
-    for(uint64_t i = 0; i < N2; i++) sum += (w(i, N2) - omega(i, N2)).modulus();
+    for(uint64_t i = 0; i < N2; i++) {
+        for(uint64_t j = 0; j < N2; j++) sum += (w(i, j, N2)-omega(i*j, N2)).modulus();
+    }
     std::cout << "L2 Error in Checking against N2 = " << N2 << " is " << sum << "\n";
+    
     sum = 0.;
-    for(uint64_t i = 0; i < N3; i++) sum += (w(i, N3) - omega(i, N3)).modulus();
+    for(uint64_t i = 0; i < N3; i++) {
+        for(uint64_t j = 0; j < N3; j++) {
+            Complex ww = w(i,j, N3);
+            Complex om = omega(i*j, N3);
+
+#if ENTRYWISE_COMP
+            std::cout << "w(" << i << "," << j << "," << N3 << ") = " << ww << ", omega(" << i << "*" << j << ", " << N3 << ") = " << om << "\n";
+#endif
+            sum += (ww-om).modulus();
+        }
+    }
     std::cout << "L2 Error in Checking against N3 = " << N3 << " is " << sum << "\n";
 }
 
@@ -171,43 +189,78 @@ void time_const_tree() {
     std::cerr << "Known at run time took " << duration_cast<nanoseconds>(end-start).count() << "ns\n";
 }
 
-void time_omega() {
+auto omega_fcn_time(std::vector<uint64_t>& Nvec) {
     using std::chrono::duration_cast;
     using std::chrono::nanoseconds;
     typedef std::chrono::high_resolution_clock clock;
 
+    auto start = clock::now();
+    for(auto& Nj : Nvec) {
+        for(uint64_t i = 0; i < Nj; i++) {
+            for(uint64_t j = 0; j < Nj; j++) {
+                Complex w0 = omega(i*j, Nj);
+                if(Nj == 16) std::cout << w0 << "\n";
+            }
+        }
+    }
+    auto end = clock::now();
+    return duration_cast<nanoseconds>(end-start).count();
+}
+
+auto omega_class_time(std::vector<uint64_t>& Nvec, Omega w) {
+    using std::chrono::duration_cast;
+    using std::chrono::nanoseconds;
+    typedef std::chrono::high_resolution_clock clock;
+
+    auto start = clock::now();
+    for(auto& Nj : Nvec) {
+        for(uint64_t i = 0; i < Nj; i++) {
+            for(uint64_t j = 0; j < Nj; j++) {
+                Complex w0 = w(i, j, Nj);
+                if(Nj == 16) std::cout << w0 << "\n";
+            }
+        }
+    }
+    auto end = clock::now();
+    return duration_cast<nanoseconds>(end-start).count();
+}
+
+void time_omega() {
     uint64_t N_factors = 10;
-    uint Njmax = 15;
+    int Njmax = 10;
+    
+    auto rand = std::bind(std::uniform_int_distribution<>{1,Njmax}, std::default_random_engine{});
+
+    uint Ntrials = 100;
+    
     std::vector<uint64_t> Nvec {};
     uint64_t N = 1;
-    auto rand = std::bind(std::uniform_int_distribution<>{1,Njmax}, std::default_random_engine{});
     for(uint i = 0; i < N_factors; i++) {
         uint tmp = rand();
         N *= tmp;
         Nvec.push_back(tmp);
     }
     Omega w (N, Direction::forward);
+    auto fcn_time = omega_fcn_time(Nvec);
+    auto class_time = omega_class_time(Nvec, w);
 
-    auto start = clock::now();
-    for(auto& Nj : Nvec) {
-        for(uint64_t i = 0; i < Nj; i++) {
-            Complex w0 = omega(i, Nj);
-            if(Nj == 16) std::cout << w0 << "\n";
+    for(uint i = 0; i < Ntrials; i++) {
+        Nvec.clear();
+        N = 1;
+        for(uint i = 0; i < N_factors; i++) {
+            uint tmp = rand();
+            N *= tmp;
+            Nvec.push_back(tmp);
         }
-    }
-    auto end = clock::now();
-    auto naive_twiddle = duration_cast<nanoseconds>(end-start).count();
-    std::cout << "Naive implementation elapsed time is " << naive_twiddle*1.e-9 << "s\n";
+        w(N);
 
-    start = clock::now();
-    for(auto& Nj : Nvec) {
-        for(uint64_t i = 0; i < Nj; i++) {
-            Complex w0 = w(i, Nj);
-            if(Nj == 16) std::cout << w0 << "\n";
-        }
+        fcn_time += omega_fcn_time(Nvec);
+        class_time += omega_class_time(Nvec, w);
     }
-    end = clock::now();
-    auto new_twiddle = duration_cast<nanoseconds>(end - start).count();
-    std::cout << "Class-based implementation of seconds is " << new_twiddle*1.e-9 << "s\n";
+
+    std::cout << "Naive implementation elapsed time is " << (fcn_time/((double) Ntrials))*1.e-9 << "s\n";
+
     
+    
+    std::cout << "Class-based implementation of seconds is " << (class_time/((double) Ntrials))*1.e-9 << "s\n";
 }
