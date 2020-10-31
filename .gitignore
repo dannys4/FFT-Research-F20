@@ -9,6 +9,7 @@
 /**/*.o
 /**/run
 /**/callgrind.out.*
+/**/.devcontainer
 
 # make sure to include any gitignore files
 !.gitignore
