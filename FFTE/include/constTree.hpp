@@ -1,8 +1,29 @@
 #ifndef CONSTTREE_HPP
 #define CONSTTREE_HPP
+/**
+ * Code Author: Danny Sharp
+ * This file is part of FFTE (Fast Fourier Transform Engine)
+ */
+
 
 #include <iostream>
 #include "algos.hpp"
+
+
+/* This is a generic class designed to be used as a
+ * compile-time ready tree. It is not used anywhere here
+ * except for debugging purposes
+ */
+template<typename T>
+class constBiNode {
+    private:
+    public:
+        T elem;
+        uint64_t left = 0;
+        uint64_t right = 0;
+        constexpr constBiNode() = default;
+        constexpr constBiNode(const T e) {elem = e;}
+};
 
 constexpr bool power_of(const uint64_t n, const uint64_t pow) {
     uint64_t k = n;

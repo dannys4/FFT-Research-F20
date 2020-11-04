@@ -10,6 +10,7 @@
 #include <complex>
 #include "constTree.hpp"
 #include "omega.hpp"
+#include <cassert>
 
 void check_fft();
 void check_fft_tree();

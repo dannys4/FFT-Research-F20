@@ -1,4 +1,8 @@
 #include "test.hpp"
+/**
+ * Code Author: Danny Sharp
+ * This file is part of FFTE (Fast Fourier Transform Engine)
+ */
 
 #define CHECKSUM_COMP 1
 #define ENTRYWISE_COMP 0
@@ -87,11 +91,11 @@ void check_fft_tree() {
 }
 
 
-/*
- * Functions to clock my running times. These check in different cases
+/* Functions to clock my running times. These check in different cases
  * to see if what I'm doing is actually sufficiently fast
  */
 
+// Compares a new FFT to the reference composite FFT
 void time_fft() {
     using std::chrono::duration_cast;
     using std::chrono::nanoseconds;
@@ -123,21 +127,22 @@ void time_fft() {
         if(in == (Complex*) 0x12345) std::cout << "this shouldn't print\n";
     }
     
-    // start = clock::now();
-    // reference_composite_FFT(n, in, out_new, 1, 1);
-    // end = clock::now();
-    // auto ref_fft = duration_cast<nanoseconds>(end-start).count();
-    // for(int i = 1; i < Ntrials; i++) {
-    //     start = clock::now();
-    //     reference_composite_FFT(n, in, out_new, 1, 1);
-    //     end = clock::now();
-    //     ref_fft += duration_cast<nanoseconds>(end-start).count();
-    //     if(in == (Complex*) 0x12345) std::cout << "this shouldn't print\n";
-    // }
-    // std::cout << "The newest tranform takes " << (new_fft*1.e-9)/((double) Ntrials) << "s, where the reference takes " << (ref_fft*1e-9)/((double) Ntrials) << "s\n";
+    start = clock::now();
+    reference_composite_FFT(n, in, out_new, 1, 1);
+    end = clock::now();
+    auto ref_fft = duration_cast<nanoseconds>(end-start).count();
+    for(int i = 1; i < Ntrials; i++) {
+        start = clock::now();
+        reference_composite_FFT(n, in, out_new, 1, 1);
+        end = clock::now();
+        ref_fft += duration_cast<nanoseconds>(end-start).count();
+        if(in == (Complex*) 0x12345) std::cout << "this shouldn't print\n";
+    }
+    std::cout << "The newest tranform takes " << (new_fft*1.e-9)/((double) Ntrials) << "s, where the reference takes " << (ref_fft*1e-9)/((double) Ntrials) << "s\n";
     free(in); free(out_ref); free(out_new);
 }
 
+// Compares my complex multiplication to std::complex multiplication
 void time_complex_mult() {
     using std::chrono::duration_cast;
     using std::chrono::nanoseconds;
@@ -179,6 +184,7 @@ void time_complex_mult() {
     std::cout << "My mult was " << (((float) mymult/ (float) stdmult)) << " times the speed of std\n";
 }
 
+// Times how fast making a tree of uints at compile time is vs. runtime
 void time_const_tree() {
     using std::chrono::duration_cast;
     using std::chrono::nanoseconds;
@@ -217,6 +223,7 @@ void time_const_tree() {
     std::cerr << "Known at run time took " << duration_cast<nanoseconds>(end-start).count() << "ns\n";
 }
 
+// Times how fast the call to the function omega is
 auto omega_fcn_time(std::vector<uint64_t>& Nvec) {
     using std::chrono::duration_cast;
     using std::chrono::nanoseconds;
@@ -235,7 +242,8 @@ auto omega_fcn_time(std::vector<uint64_t>& Nvec) {
     return duration_cast<nanoseconds>(end-start).count();
 }
 
-auto omega_class_time(std::vector<uint64_t>& Nvec, Omega w) {
+// Times how fast using the Omega class is
+auto omega_class_time(std::vector<uint64_t>& Nvec, Omega& w) {
     using std::chrono::duration_cast;
     using std::chrono::nanoseconds;
     typedef std::chrono::high_resolution_clock clock;
@@ -253,6 +261,7 @@ auto omega_class_time(std::vector<uint64_t>& Nvec, Omega w) {
     return duration_cast<nanoseconds>(end-start).count();
 }
 
+// Compares the time of the omega function to the omega class
 void time_omega() {
     uint64_t N_factors = 10;
     int Njmax = 10;

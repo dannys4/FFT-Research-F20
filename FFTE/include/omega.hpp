@@ -1,24 +1,38 @@
 #ifndef OMEGA_HPP
 #define OMEGA_HPP
+/**
+ * Code Author: Danny Sharp
+ * This file is part of FFTE (Fast Fourier Transform Engine)
+ */
 
 #include "complex.hpp"
 #include <memory>
+
+// An enum for knowing whether the transform is forward or inverse
 enum class Direction {forward, inverse};
 
+// A class to hold the exponential factors of forward or inverse Fourier transforms
 class Omega { // exp(2pi i j / N)
+    // For automatic freeing when we're done using this object
     using ComplexArr = std::shared_ptr<Complex[]>;
 
     private:
-        uint64_t N;
-        ComplexArr data = nullptr;
+        uint64_t N; // Size of array
+        ComplexArr data = nullptr; // Where data is held
 
+        // Initialize N and data (assumes dir is predetermined)
         void init(uint64_t length) {
             N = length;
+
+            // Base the initialization on an exponential factor with
+            // minimal increment
             Complex w0;
             switch(dir) {
                 case Direction::forward: w0 = initForward(); break;
                 case Direction::inverse: w0 = initInverse(); break;
             }
+
+            // Allocate and initialize data
             Complex w = w0;
             data = ComplexArr(new Complex[N]);
             data[0] = Complex(1., 0.);
@@ -28,12 +42,14 @@ class Omega { // exp(2pi i j / N)
             }
         }
 
+        // Base initialization for a forward FFT
         Complex initForward() {
             double a = 2.*M_PI*(1.)/((double) N);
             Complex w0 {cos(a), -sin(a)};
             return w0;
         }
 
+        // Base initialization for an inverse FFT
         Complex initInverse() {
             double a = 2.*M_PI*(1.)/((double) N);
             Complex w0 {cos(a), sin(a)};
@@ -41,15 +57,31 @@ class Omega { // exp(2pi i j / N)
         }
 
     public:
+        // Public facing member that ultimately determines whether
+        // the FFT is forward or inverse
         const Direction dir;
-        Omega(Direction d): dir(d) {}
-        Omega(uint64_t length, Direction d): dir(d) {
+
+        Omega() = delete;
+
+        // Basic constructor
+        explicit Omega(Direction d): dir(d) {}
+
+        // Constructor that also initializes the object
+        explicit Omega(uint64_t length, Direction d): dir(d) {
             init(length);
         }
-        Omega(const Omega& o): N(o.N), data(o.data), dir(o.dir) {};
 
+        // Constructor from other Omega
+        explicit Omega(const Omega& o): N(o.N), data(o.data), dir(o.dir) {};
+
+        // Copy assignment
         Omega& operator=(const Omega& o) {
             return *this;
+        }
+
+        // Initialize the Omega object post-construction
+        void operator()(uint64_t length) {
+            init(length);
         }
 
         // Return if this Omega object has any data
@@ -77,11 +109,6 @@ class Omega { // exp(2pi i j / N)
             Complex w = w0;
             for(uint64_t i = 1; i < min; i++) w = w0*w;
             return w;
-        }
-
-        // Initialize the Omega object
-        void operator()(uint64_t length) {
-            init(length);
         }
 };
 

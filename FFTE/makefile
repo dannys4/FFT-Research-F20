@@ -1,5 +1,5 @@
 INCDIR=./include
-CC=g++
+CC=g++-7
 SIMDARGS= -mfma -mavx2
 CFLAGS=-I$(INCDIR) $(SIMDARGS) -ggdb3 -Wall
 SRCDIR=./src
@@ -13,7 +13,7 @@ DEPS=$(patsubst $(INCDIR)/%,%,$(_DEPS))
 _OBJ=$(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(wildcard $(SRCDIR)/*.cpp)) 
 OBJ=$(patsubst %,%,$(_OBJ))
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(INCDIR)/%.hpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
 run: $(OBJ)
@@ -22,4 +22,4 @@ run: $(OBJ)
 .PHONY: clean all default
 
 clean:
-	rm -f $(OBJDIR)/*.o *~ core $(INCDIR)/*~ run
+	rm -f $(OBJDIR)/*.o *~ $(INCDIR)/*~ run
