@@ -4,9 +4,9 @@
  * This file is part of FFTE (Fast Fourier Transform Engine)
  */
 
-#define CHECKSUM_COMP 0
-#define ENTRYWISE_COMP 1
-#define FFT_LENGTH 6
+#define CHECKSUM_COMP 1
+#define ENTRYWISE_COMP 0
+#define FFT_LENGTH 4*9*5*7*11
 
 /*
  * Functions to test veracity of outputs. These check against references
@@ -62,43 +62,8 @@ void check_fft(Direction dir) {
     }
 }
 
-// Checks how correct the inverse Fourier transforms are
-void check_ifft() {
-    std::cout << "Checking if the inverse FFT works...\n";
-    const int n = FFT_LENGTH;
-    int ell = getNumNodes(n);
-    constBiFuncNode root[ell];
-    init_fft_tree(root, n);
-
-    auto in = (Complex*) malloc(n*sizeof(Complex));
-    auto out_new = (Complex*) malloc(n*sizeof(Complex));
-    auto out_comp = (Complex*) malloc(n*sizeof(Complex));
-    auto out_ref = (Complex*) malloc(n*sizeof(Complex));
-    for(int i = 0; i < n; i++) in[i] = Complex(i, 2.*i);
-
-    reference_composite_FFT(n, in, out_ref, Direction::inverse);
-    Omega w(Direction::forward);
-    root->fptr(in, out_new, 1, 1, root, w);
-
-    
-#if CHECKSUM_COMP
-    std::cout << "Looking at the norm squared of all the errors...\n";
-    double sum = (out_ref[0] - out_new[0]).modulus();
-    for(int i = 1; i < n; i++) sum += (out_ref[i]-out_new[i]).modulus();
-    std::cout << "Norm squared of Error: " << sum << "\n";
-#endif
-#if ENTRYWISE_COMP
-    std::cout << "Comparing the values at each entry...\n";
-    for(int i = 0; i < n; i++) 
-            std::cout << "out_ref[" << i << "] = " << out_ref[i] <<
-                       ", out_new[" << i << "] = " << out_new[i] <<
-                       ", Err = " << (out_ref[i] - out_new[i]).modulus() << "\n";
-#endif
-    free(in); free(out_comp); free(out_ref); free(out_new);
-    std::cout << "Done checking the FFT!\n";
-}
-
 void check_omega() {
+    std::cout << "Checking the correctness of the Omega class...\n";
     uint64_t N1 = 9;
     uint64_t N2 = 5;
     uint64_t N3 = 7;
@@ -135,9 +100,11 @@ void check_omega() {
         }
     }
     std::cout << "L2 Error in Checking against N3 = " << N3 << " is " << sum << "\n";
+    std::cout << "Done checking the Omega class!\n\n"
 }
 
 void check_fft_tree() {
+    std::cout << "Checking the output of call graph node sizes against expected output...\n";
     uint64_t N = 15120;
     uint ell = getNumNodes(N);
     constBiFuncNode root[ell];
@@ -145,6 +112,7 @@ void check_fft_tree() {
     std::cout << "\t\t";
     printTree(root);
     std::cout << "\nExpected\t15120: (16, 945: (27, 35: (5, 7)))\n";
+    std::cout << "Done checking the call graph!\n\n";
 }
 
 
@@ -154,6 +122,7 @@ void check_fft_tree() {
 
 // Compares a new FFT to the reference composite FFT
 void time_fft() {
+    std::cout << "Timing the current FFT tree configuration against reference composite FFT...\n";
     using std::chrono::duration_cast;
     using std::chrono::nanoseconds;
     typedef std::chrono::high_resolution_clock clock;
@@ -195,12 +164,19 @@ void time_fft() {
         ref_fft += duration_cast<nanoseconds>(end-start).count();
         if(in == (Complex*) 0x12345) std::cout << "this shouldn't print\n";
     }
-    std::cout << "The newest tranform takes " << (new_fft*1.e-9)/((double) Ntrials) << "s, where the reference takes " << (ref_fft*1e-9)/((double) Ntrials) << "s\n";
+    std::cout << "The newest tranform takes " <<
+                 (new_fft*1.e-9)/((double) Ntrials) <<
+                 "s, where the reference takes " <<
+                 (ref_fft*1e-9)/((double) Ntrials) << "s\n";
+    
     free(in); free(out_ref); free(out_new);
+
+    std::cout << "Done timing the FFTs!\n\n";
 }
 
 // Compares my complex multiplication to std::complex multiplication
 void time_complex_mult() {
+    std::cout << "Comparing the performance of my Complex multiplication vs. std::complex...\n";
     using std::chrono::duration_cast;
     using std::chrono::nanoseconds;
     typedef std::chrono::high_resolution_clock clock;
@@ -239,16 +215,18 @@ void time_complex_mult() {
     auto mymult = duration_cast<nanoseconds>(end-start).count();
     std::cout << "My mult took " << mymult << "ns\n";
     std::cout << "My mult was " << (((float) mymult/ (float) stdmult)) << " times the speed of std\n";
+    std::cout << "Done timing complex multiplication!\n\n";
 }
 
 // Times how fast making a tree of uints at compile time is vs. runtime
 void time_const_tree() {
+    std::cout << "Time how long it takes to construct a const tree vs. a tree only known at runtime...\n";
     using std::chrono::duration_cast;
     using std::chrono::nanoseconds;
     typedef std::chrono::high_resolution_clock clock;
 
     uint N = 1e5;
-    std::cerr << "Testing compile time performance...\n";
+    std::cout << "Testing compile time performance...\n";
     auto start = clock::now();
     for(uint64_t i = 0; i < N; i++) {
         uint64_t ell = i*i - 3*i + 4;
@@ -259,14 +237,14 @@ void time_const_tree() {
         printRoot(root, k);
     }
     auto end = clock::now();
-    std::cerr << "Known at compile time took " << duration_cast<nanoseconds>(end-start).count() << "ns\n";
-    std::cerr << "Initializing random ints...\n";
+    std::cout << "Known at compile time took " << duration_cast<nanoseconds>(end-start).count() << "ns\n";
+    std::cout << "Initializing random ints...\n";
     auto rand = std::bind(std::uniform_int_distribution<>{2, 4}, std::default_random_engine{});
     std::vector<uint> v {};
     for(uint64_t i = 0; i < N; i++) {
         v.push_back(rand());
     }
-    std::cerr << "Random ints initialized. Testing runtime performance...\n";
+    std::cout << "Random ints initialized. Testing runtime performance...\n";
     start = clock::now();
     for(uint64_t i = 0; i < N; i++) {
         uint64_t ell = i*i - v[i]*i + 5;
@@ -277,7 +255,8 @@ void time_const_tree() {
         printRoot(root, k);
     }
     end = clock::now();
-    std::cerr << "Known at run time took " << duration_cast<nanoseconds>(end-start).count() << "ns\n";
+    std::cout << "Known at run time took " << duration_cast<nanoseconds>(end-start).count() << "ns\n";
+    std::cout << "Done timing tree construction performance!\n\n";
 }
 
 // Times how fast the call to the function omega is
@@ -320,6 +299,7 @@ auto omega_class_time(std::vector<uint64_t>& Nvec, Omega& w) {
 
 // Compares the time of the omega function to the omega class
 void time_omega() {
+    std::cout << "Comparing the time to use the Omega class vs. explicitly constructing omega at every iteration...\n";
     uint64_t N_factors = 10;
     int Njmax = 10;
     
@@ -354,7 +334,7 @@ void time_omega() {
 
     std::cout << "Naive implementation elapsed time is " << (fcn_time/((double) Ntrials))*1.e-9 << "s\n";
 
-    
-    
     std::cout << "Class-based implementation of seconds is " << (class_time/((double) Ntrials))*1.e-9 << "s\n";
+
+    std::cout << "Done timing the omega construction!\n\n";
 }
