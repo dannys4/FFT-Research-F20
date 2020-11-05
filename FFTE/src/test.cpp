@@ -100,7 +100,7 @@ void check_omega() {
         }
     }
     std::cout << "L2 Error in Checking against N3 = " << N3 << " is " << sum << "\n";
-    std::cout << "Done checking the Omega class!\n\n"
+    std::cout << "Done checking the Omega class!\n\n";
 }
 
 void check_fft_tree() {

@@ -1,5 +1,5 @@
 INCDIR=./include
-CC=g++-7
+CC=g++-9
 SIMDARGS= -mfma -mavx2
 CFLAGS=-I$(INCDIR) $(SIMDARGS) -ggdb3 -Wall
 SRCDIR=./src
