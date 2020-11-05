@@ -70,7 +70,6 @@ void pow2_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFunc
     pow2_FFT_helper(N, x, y, s_in, s_out, w); // Call the radix-2 FFT
 }
 
-
 // Internal helper function to perform a DFT in O(n^2) time
 void DFT_helper(uint64_t size, Complex* sig_in, Complex* sig_out, uint64_t s_in, uint64_t s_out, Omega& w) {
     
