@@ -12,7 +12,7 @@
 #include "omega.hpp"
 #include <cassert>
 
-void check_fft();
+void check_fft(Direction dir);
 void check_fft_tree();
 void check_omega();
 

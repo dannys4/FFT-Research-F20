@@ -4,16 +4,23 @@
  * This file is part of FFTE (Fast Fourier Transform Engine)
  */
 
-#define CHECKSUM_COMP 1
-#define ENTRYWISE_COMP 0
-#define FFT_LENGTH 27*128*35
+#define CHECKSUM_COMP 0
+#define ENTRYWISE_COMP 1
+#define FFT_LENGTH 6
 
 /*
  * Functions to test veracity of outputs. These check against references
  * or expected values to get their answers, so sometimes (due to floating point
  * inaccuracies), there might be slight discrepencies
  */
-void check_fft() {
+
+// Checks how correct the forward Fourier transforms are
+void check_fft(Direction dir) {
+    switch(dir) {
+        case Direction::forward: std::cout << "Checking the correctness of the FFT against the comparison... \n"; break;
+        case Direction::inverse: std::cout << "Checking the correctness of the IFFT against the comparison...\n"; break;
+    }
+
     const int n = FFT_LENGTH;
     int ell = getNumNodes(n);
     constBiFuncNode root[ell];
@@ -23,45 +30,95 @@ void check_fft() {
     auto out_new = (Complex*) malloc(n*sizeof(Complex));
     auto out_comp = (Complex*) malloc(n*sizeof(Complex));
     auto out_ref = (Complex*) malloc(n*sizeof(Complex));
-    for(int i = 0; i < n; i++) in[i] = Complex(1., 2.);
+    for(int i = 0; i < n; i++) in[i] = Complex(i, 2.*i);
 
-    reference_composite_FFT(n, in, out_ref, 1, 1);
+    reference_composite_FFT(n, in, out_ref, dir);
+    Omega w(dir);
+    root->fptr(in, out_new, 1, 1, root, w);
+
+    
+#if CHECKSUM_COMP
+    std::cout << "Looking at the norm squared of all the errors...\n";
+    double sum = (out_ref[0] - out_new[0]).modulus();
+    for(int i = 1; i < n; i++) sum += (out_ref[i]-out_new[i]).modulus();
+    std::cout << "Norm squared of Error: " << sum << "\n";
+#endif
+#if ENTRYWISE_COMP
+    std::cout << "Comparing the values at each entry...\n";
+    for(int i = 0; i < n; i++) {
+            if(dir == Direction::inverse) {
+                out_ref[i] /= (double) n;
+                out_new[i] /= (double) n;
+            }
+            std::cout << "out_ref[" << i << "] = " << out_ref[i]  <<
+                       ", out_new[" << i << "] = " << out_new[i]  <<
+                       ", Err = " << (out_ref[i] - out_new[i]).modulus() << "\n";
+    }
+#endif
+    free(in); free(out_comp); free(out_ref); free(out_new);
+    switch(dir) {
+        case Direction::forward: std::cout << "Done checking the FFT! \n\n";  break;
+        case Direction::inverse: std::cout << "Done checking the IFFT!\n\n"; break;
+    }
+}
+
+// Checks how correct the inverse Fourier transforms are
+void check_ifft() {
+    std::cout << "Checking if the inverse FFT works...\n";
+    const int n = FFT_LENGTH;
+    int ell = getNumNodes(n);
+    constBiFuncNode root[ell];
+    init_fft_tree(root, n);
+
+    auto in = (Complex*) malloc(n*sizeof(Complex));
+    auto out_new = (Complex*) malloc(n*sizeof(Complex));
+    auto out_comp = (Complex*) malloc(n*sizeof(Complex));
+    auto out_ref = (Complex*) malloc(n*sizeof(Complex));
+    for(int i = 0; i < n; i++) in[i] = Complex(i, 2.*i);
+
+    reference_composite_FFT(n, in, out_ref, Direction::inverse);
     Omega w(Direction::forward);
     root->fptr(in, out_new, 1, 1, root, w);
 
     
 #if CHECKSUM_COMP
+    std::cout << "Looking at the norm squared of all the errors...\n";
     double sum = (out_ref[0] - out_new[0]).modulus();
     for(int i = 1; i < n; i++) sum += (out_ref[i]-out_new[i]).modulus();
-    std::cout << "Norm of Error: " << sum << "\n";
+    std::cout << "Norm squared of Error: " << sum << "\n";
 #endif
 #if ENTRYWISE_COMP
-    for(int i = 0; i < n; i++) std::cout << "out_ref[" << i << "] = " << out_ref[i] << ", out_new[" << i << "] = " << out_new[i] << ", Err = " << (out_ref[i] - out_new[i]).modulus() << "\n";
+    std::cout << "Comparing the values at each entry...\n";
+    for(int i = 0; i < n; i++) 
+            std::cout << "out_ref[" << i << "] = " << out_ref[i] <<
+                       ", out_new[" << i << "] = " << out_new[i] <<
+                       ", Err = " << (out_ref[i] - out_new[i]).modulus() << "\n";
 #endif
     free(in); free(out_comp); free(out_ref); free(out_new);
+    std::cout << "Done checking the FFT!\n";
 }
 
 void check_omega() {
-    uint64_t N1 = 27;
+    uint64_t N1 = 9;
     uint64_t N2 = 5;
     uint64_t N3 = 7;
     uint64_t N = N1*N2*N3;
     Omega w (N, Direction::forward);
     double sum = 0.;
     for(uint64_t i = 0; i < N; i++) {
-        for(uint64_t j = 0; j < N; j++) sum += (w(i, j, N)-omega(i*j, N)).modulus();
+        for(uint64_t j = 0; j < N; j++) sum += (w(i, j, N)-omega(i*j, N, Direction::forward)).modulus();
     }
     std::cout << "L2 Error in initialization with N = " << N << " is " << sum << "\n";
     
     sum = 0.;
     for(uint64_t i = 0; i < N1; i++) {
-        for(uint64_t j = 0; j < N1; j++) sum += (w(i, j, N1)-omega(i*j, N1)).modulus();
+        for(uint64_t j = 0; j < N1; j++) sum += (w(i, j, N1)-omega(i*j, N1, Direction::forward)).modulus();
     }
     std::cout << "L2 Error in Checking against N1 = " << N1 << " is " << sum << "\n";
     
     sum = 0.;
     for(uint64_t i = 0; i < N2; i++) {
-        for(uint64_t j = 0; j < N2; j++) sum += (w(i, j, N2)-omega(i*j, N2)).modulus();
+        for(uint64_t j = 0; j < N2; j++) sum += (w(i, j, N2)-omega(i*j, N2, Direction::forward)).modulus();
     }
     std::cout << "L2 Error in Checking against N2 = " << N2 << " is " << sum << "\n";
     
@@ -69,7 +126,7 @@ void check_omega() {
     for(uint64_t i = 0; i < N3; i++) {
         for(uint64_t j = 0; j < N3; j++) {
             Complex ww = w(i,j, N3);
-            Complex om = omega(i*j, N3);
+            Complex om = omega(i*j, N3, Direction::forward);
 
 #if ENTRYWISE_COMP
             std::cout << "w(" << i << "," << j << "," << N3 << ") = " << ww << ", omega(" << i << "*" << j << ", " << N3 << ") = " << om << "\n";
@@ -128,12 +185,12 @@ void time_fft() {
     }
     
     start = clock::now();
-    reference_composite_FFT(n, in, out_new, 1, 1);
+    reference_composite_FFT(n, in, out_new, Direction::forward);
     end = clock::now();
     auto ref_fft = duration_cast<nanoseconds>(end-start).count();
     for(int i = 1; i < Ntrials; i++) {
         start = clock::now();
-        reference_composite_FFT(n, in, out_new, 1, 1);
+        reference_composite_FFT(n, in, out_new, Direction::forward);
         end = clock::now();
         ref_fft += duration_cast<nanoseconds>(end-start).count();
         if(in == (Complex*) 0x12345) std::cout << "this shouldn't print\n";
@@ -233,7 +290,7 @@ auto omega_fcn_time(std::vector<uint64_t>& Nvec) {
     for(auto& Nj : Nvec) {
         for(uint64_t i = 0; i < Nj; i++) {
             for(uint64_t j = 0; j < Nj; j++) {
-                Complex w0 = omega(i*j, Nj);
+                Complex w0 = omega(i*j, Nj, Direction::forward);
                 if(Nj == 16) std::cout << w0 << "\n";
             }
         }

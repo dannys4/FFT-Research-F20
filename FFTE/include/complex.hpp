@@ -41,6 +41,16 @@ class Complex {
             return Complex(ret);
         }
 
+        Complex operator/(const double y) {
+            __m128d ret = _mm_div_pd(var, _mm_set_pd1(y));
+            return Complex(ret);
+        }
+
+        Complex& operator/=(const double y) {
+            var = _mm_div_pd(var, _mm_set_pd1(y));
+            return *this;
+        }
+
         /* 
          * Performs multiplication for two complex numbers. Equivalent code below:
          * auto cc = _mm_permute_pd(y.var, 0);

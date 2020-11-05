@@ -30,9 +30,9 @@ constexpr uint64_t reverse(uint64_t v, uint8_t nbits) {
 }
 
 // Calculate an omega factor for the FFT. This isn't used by me in practice.
-Complex omega(uint power, uint N) {
+Complex omega(uint power, uint N, Direction dir) {
     double a = 2.*M_PI*((double) power)/((double) N);
-    Complex ret {cos(a), -sin(a)};
+    Complex ret {cos(a), static_cast<int>(dir)*sin(a)};
     return ret;
 }
 
@@ -92,9 +92,9 @@ void DFT_helper(uint64_t size, Complex* sig_in, Complex* sig_out, uint64_t s_in,
 }
 
 // Internal helper function to perform a DFT without an Omega object (there's no reason to initialize one)
-void DFT_helper(uint64_t size, Complex* sig_in, Complex* sig_out, uint64_t s_in, uint64_t s_out) {
-    // Smallest twiddle used
-    Complex w0 = omega(1, size);
+void DFT_helper(uint64_t size, Complex* sig_in, Complex* sig_out, uint64_t s_in, uint64_t s_out, Direction dir) {
+    // Twiddle with smallest numerator
+    Complex w0 = omega(1, size, dir);
 
     // Base twiddle for each outer iteration
     Complex wk = w0;
@@ -129,13 +129,15 @@ void DFT_helper(uint64_t size, Complex* sig_in, Complex* sig_out, uint64_t s_in,
 
 // External-facing function to properly call the internal DFT function
 void DFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sLeaf, Omega& w) {
-    if(!w()) DFT_helper(sLeaf->sz, x, y, s_in, s_out);
+    if(!w()) {
+        DFT_helper(sLeaf->sz, x, y, s_in, s_out, w.dir);
+    }
     else DFT_helper(sLeaf->sz, x, y, s_in, s_out, w);
 }
 
 // External-facing reference DFT for testing purposes
-void reference_DFT(uint64_t N, Complex* x, Complex* y) {
-    DFT_helper(N, x, y, 1, 1);
+void reference_DFT(uint64_t N, Complex* x, Complex* y, Direction dir) {
+    DFT_helper(N, x, y, 1, 1, dir);
 }
 
 // External & Internal function for radix-N1 C-T FFTs
@@ -188,7 +190,7 @@ void composite_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constB
 
 // Internal-facing radix-N1 C-T FFT for reference. Doesn't use any call graph or Omega class.
 // Used for checking correctness of output
-void reference_composite_FFT_helper(uint64_t N, Complex* x, Complex* y, uint64_t s_in, uint64_t s_out) {
+void reference_composite_FFT_helper(uint64_t N, Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, Direction dir) {
     
     // Find the factors of N
     uint N1 = factor(N);
@@ -196,7 +198,7 @@ void reference_composite_FFT_helper(uint64_t N, Complex* x, Complex* y, uint64_t
     
     // Execute a DFT if necessary
     if(N1 == N) {
-        DFT_helper(N, x, y, s_in, s_out);
+        DFT_helper(N, x, y, s_in, s_out, dir);
         return;
     }
 
@@ -204,18 +206,18 @@ void reference_composite_FFT_helper(uint64_t N, Complex* x, Complex* y, uint64_t
     Complex* z = (Complex*) malloc(N*sizeof(Complex));
 
     // Take the FFT of the "rows" and put output into z.
-    reference_composite_FFT_helper(N2, x, z, N1*s_in, 1);
+    reference_composite_FFT_helper(N2, x, z, N1*s_in, 1, dir);
     for(uint n1 = 1; n1 < N1; n1++) {
-        reference_composite_FFT_helper(N2, x+n1*s_in, z+N2*n1, N1*s_in, 1);
+        reference_composite_FFT_helper(N2, x+n1*s_in, z+N2*n1, N1*s_in, 1, dir);
         for(uint k2 = 1; k2 < N2; k2++) {
-            z[n1*N2 + k2] = z[n1*N2 + k2]*omega(n1*k2, N);
+            z[n1*N2 + k2] = z[n1*N2 + k2]*omega(n1*k2, N, dir);
         }
-    }
+    } 
 
     // Take the FFT of the "columns" of z and put it into y
     // Don't need n1 for the second transform as it's just the indexer.
     for(uint k2 = 0; k2 < N2; k2++) {
-        reference_composite_FFT_helper(N1, z+k2, y+k2*s_out, N2, N2*s_out);
+        reference_composite_FFT_helper(N1, z+k2, y+k2*s_out, N2, N2*s_out, dir);
     }
 
     // Free memory used by z
@@ -223,8 +225,8 @@ void reference_composite_FFT_helper(uint64_t N, Complex* x, Complex* y, uint64_t
 }
 
 // External-facing function to calculate a composite FFT using the reference code.
-void reference_composite_FFT(uint64_t N, Complex* x, Complex* y) {
-    reference_composite_FFT_helper(N, x, y, 1, 1);
+void reference_composite_FFT(uint64_t N, Complex* x, Complex* y, Direction dir) {
+    reference_composite_FFT_helper(N, x, y, 1, 1, dir);
 }
 
 // Internal recursive helper-function that calculates the FFT of a signal with length 3^k

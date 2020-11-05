@@ -16,6 +16,9 @@ OBJ=$(patsubst %,%,$(_OBJ))
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(INCDIR)/%.hpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
+
 run: $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 

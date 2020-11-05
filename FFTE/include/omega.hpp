@@ -9,7 +9,7 @@
 #include <memory>
 
 // An enum for knowing whether the transform is forward or inverse
-enum class Direction {forward, inverse};
+enum class Direction {forward = -1, inverse = 1};
 
 // A class to hold the exponential factors of forward or inverse Fourier transforms
 class Omega { // exp(2pi i j / N)
@@ -26,11 +26,8 @@ class Omega { // exp(2pi i j / N)
 
             // Base the initialization on an exponential factor with
             // minimal increment
-            Complex w0;
-            switch(dir) {
-                case Direction::forward: w0 = initForward(); break;
-                case Direction::inverse: w0 = initInverse(); break;
-            }
+            double a = 2.*M_PI*(1.)/((double) N);
+            Complex w0 {cos(a), static_cast<int>(dir) * sin(a)};
 
             // Allocate and initialize data
             Complex w = w0;
@@ -40,20 +37,6 @@ class Omega { // exp(2pi i j / N)
                 data[k] = w;
                 w = w*w0;
             }
-        }
-
-        // Base initialization for a forward FFT
-        Complex initForward() {
-            double a = 2.*M_PI*(1.)/((double) N);
-            Complex w0 {cos(a), -sin(a)};
-            return w0;
-        }
-
-        // Base initialization for an inverse FFT
-        Complex initInverse() {
-            double a = 2.*M_PI*(1.)/((double) N);
-            Complex w0 {cos(a), sin(a)};
-            return w0;
         }
 
     public:
@@ -99,6 +82,7 @@ class Omega { // exp(2pi i j / N)
         #define MIN_INT(X, Y) (((X) < (Y)) ? (X) : (Y))
         #define MAX_INT(X, Y) (((X) > (Y)) ? (X) : (Y))
 
+        // Constructs appropriate exponential factor if number > denom
         Complex operator()(uint64_t num1, uint64_t num2, uint64_t denom) {
             if(num1*num2 < denom) return this->operator()(num1*num2, denom);
             

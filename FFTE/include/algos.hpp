@@ -63,15 +63,15 @@ constexpr uint64_t factor(const uint64_t f) {
     return f;
 }
 
-// Functions external to the algos implementation file
-Complex omega(uint power, uint N);
+// Functions in the algos implementation file facing externally
+Complex omega(uint power, uint N, Direction dir);
 void pow2_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot, Omega& w);
 
 void DFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sLeaf, Omega& w);
-void reference_DFT(uint64_t N, Complex* x, Complex* y);
+void reference_DFT(uint64_t N, Complex* x, Complex* y, Direction dir);
 
 void composite_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot, Omega& w);
-void reference_composite_FFT(uint64_t N, Complex* x, Complex* y);
+void reference_composite_FFT(uint64_t N, Complex* x, Complex* y, Direction dir);
 
 void pow3_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot, Omega& w);
 

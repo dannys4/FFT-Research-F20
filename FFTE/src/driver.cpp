@@ -6,5 +6,6 @@
 
 // Main function. Used for calling different parts of the testing code
 int main() {
-    time_fft();
+    // check_fft(Direction::forward);
+    check_fft(Direction::inverse);
 }
