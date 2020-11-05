@@ -6,7 +6,7 @@
  */
 
 #include "complex.hpp"
-#include <memory>
+#include <vector>
 
 // An enum for knowing whether the transform is forward or inverse
 enum class Direction {forward = -1, inverse = 1};
@@ -14,11 +14,11 @@ enum class Direction {forward = -1, inverse = 1};
 // A class to hold the exponential factors of forward or inverse Fourier transforms
 class Omega { // exp(2pi i j / N)
     // For automatic freeing when we're done using this object
-    using ComplexArr = std::shared_ptr<Complex[]>;
+    using ComplexArr = std::vector<Complex>;
 
     private:
         uint64_t N; // Size of array
-        ComplexArr data = nullptr; // Where data is held
+        ComplexArr data; // Where data is held
 
         // Initialize N and data (assumes dir is predetermined)
         void init(uint64_t length) {
@@ -31,7 +31,7 @@ class Omega { // exp(2pi i j / N)
 
             // Allocate and initialize data
             Complex w = w0;
-            data = ComplexArr(new Complex[N]);
+            data = ComplexArr(N);
             data[0] = Complex(1., 0.);
             for(uint64_t k = 1; k < N; k++) {
                 data[k] = w;
@@ -68,7 +68,7 @@ class Omega { // exp(2pi i j / N)
         }
 
         // Return if this Omega object has any data
-        bool operator()() {return data != nullptr;}
+        bool operator()() {return data.size() != 0;}
 
         // Return the appropriate twiddle, if possible
         Complex operator()(uint64_t num, uint64_t denom) {
@@ -79,15 +79,12 @@ class Omega { // exp(2pi i j / N)
             return data[num*s];
         }
 
-        #define MIN_INT(X, Y) (((X) < (Y)) ? (X) : (Y))
-        #define MAX_INT(X, Y) (((X) > (Y)) ? (X) : (Y))
-
         // Constructs appropriate exponential factor if number > denom
         Complex operator()(uint64_t num1, uint64_t num2, uint64_t denom) {
             if(num1*num2 < denom) return this->operator()(num1*num2, denom);
             
-            uint64_t min = MIN_INT(num1, num2);
-            uint64_t max = MAX_INT(num1, num2);
+            uint64_t min = std::min<uint64_t>(num1, num2);
+            uint64_t max = std::max<uint64_t>(num1, num2);
             
             Complex w0 = this->operator()(max, denom);
             Complex w = w0;
