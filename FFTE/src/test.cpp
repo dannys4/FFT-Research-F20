@@ -13,6 +13,7 @@
  * or expected values to get their answers, so sometimes (due to floating point
  * inaccuracies), there might be slight discrepencies
  */
+using namespace FFTE;
 
 // Checks how correct the forward Fourier transforms are
 void check_fft(Direction dir) {
