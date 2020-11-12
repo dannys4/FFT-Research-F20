@@ -23,7 +23,7 @@ void check_fft(Direction dir) {
 
     const int n = FFT_LENGTH;
     int ell = getNumNodes(n);
-    constBiFuncNode root[ell];
+    biFuncNode root[ell];
     init_fft_tree(root, n);
 
     auto in = (Complex*) malloc(n*sizeof(Complex));
@@ -64,32 +64,32 @@ void check_fft(Direction dir) {
 
 void check_omega() {
     std::cout << "Checking the correctness of the Omega class...\n";
-    uint64_t N1 = 9;
-    uint64_t N2 = 5;
-    uint64_t N3 = 7;
-    uint64_t N = N1*N2*N3;
+    size_t N1 = 9;
+    size_t N2 = 5;
+    size_t N3 = 7;
+    size_t N = N1*N2*N3;
     Omega w (N, Direction::forward);
     double sum = 0.;
-    for(uint64_t i = 0; i < N; i++) {
-        for(uint64_t j = 0; j < N; j++) sum += (w(i, j, N)-omega(i*j, N, Direction::forward)).modulus();
+    for(size_t i = 0; i < N; i++) {
+        for(size_t j = 0; j < N; j++) sum += (w(i, j, N)-omega(i*j, N, Direction::forward)).modulus();
     }
     std::cout << "L2 Error in initialization with N = " << N << " is " << sum << "\n";
     
     sum = 0.;
-    for(uint64_t i = 0; i < N1; i++) {
-        for(uint64_t j = 0; j < N1; j++) sum += (w(i, j, N1)-omega(i*j, N1, Direction::forward)).modulus();
+    for(size_t i = 0; i < N1; i++) {
+        for(size_t j = 0; j < N1; j++) sum += (w(i, j, N1)-omega(i*j, N1, Direction::forward)).modulus();
     }
     std::cout << "L2 Error in Checking against N1 = " << N1 << " is " << sum << "\n";
     
     sum = 0.;
-    for(uint64_t i = 0; i < N2; i++) {
-        for(uint64_t j = 0; j < N2; j++) sum += (w(i, j, N2)-omega(i*j, N2, Direction::forward)).modulus();
+    for(size_t i = 0; i < N2; i++) {
+        for(size_t j = 0; j < N2; j++) sum += (w(i, j, N2)-omega(i*j, N2, Direction::forward)).modulus();
     }
     std::cout << "L2 Error in Checking against N2 = " << N2 << " is " << sum << "\n";
     
     sum = 0.;
-    for(uint64_t i = 0; i < N3; i++) {
-        for(uint64_t j = 0; j < N3; j++) {
+    for(size_t i = 0; i < N3; i++) {
+        for(size_t j = 0; j < N3; j++) {
             Complex ww = w(i,j, N3);
             Complex om = omega(i*j, N3, Direction::forward);
 
@@ -105,9 +105,9 @@ void check_omega() {
 
 void check_fft_tree() {
     std::cout << "Checking the output of call graph node sizes against expected output...\n";
-    uint64_t N = 15120;
+    size_t N = 15120;
     uint ell = getNumNodes(N);
-    constBiFuncNode root[ell];
+    biFuncNode root[ell];
     init_fft_tree(root, N);
     std::cout << "\t\t";
     printTree(root);
@@ -129,14 +129,14 @@ void time_fft() {
 
     const int n = FFT_LENGTH;
     int ell = getNumNodes(n);
-    constBiFuncNode root[ell];
+    biFuncNode root[ell];
     init_fft_tree(root, n);
 
     auto in = (Complex*) malloc(n*sizeof(Complex));
     auto out_ref = (Complex*) malloc(n*sizeof(Complex));
     auto out_new = (Complex*) malloc(n*sizeof(Complex));
 
-    for(uint64_t i = 0; i < n; i++) in[i] = Complex(i, 2*i);
+    for(size_t i = 0; i < n; i++) in[i] = Complex(i, 2*i);
     Omega w(Direction::forward);
 
     int Ntrials = 10;
@@ -228,10 +228,10 @@ void time_const_tree() {
     uint N = 1e5;
     std::cout << "Testing compile time performance...\n";
     auto start = clock::now();
-    for(uint64_t i = 0; i < N; i++) {
-        uint64_t ell = i*i - 3*i + 4;
-        uint64_t k = getNumNodes(ell);
-        constBiNode<uint64_t> root[k];
+    for(size_t i = 0; i < N; i++) {
+        size_t ell = i*i - 3*i + 4;
+        size_t k = getNumNodes(ell);
+        constBiNode<size_t> root[k];
         initUintConstBiTree(root, ell);
         std::cout << "ell = " << ell << ", ";
         printRoot(root, k);
@@ -241,16 +241,16 @@ void time_const_tree() {
     std::cout << "Initializing random ints...\n";
     auto rand = std::bind(std::uniform_int_distribution<>{2, 4}, std::default_random_engine{});
     std::vector<uint> v {};
-    for(uint64_t i = 0; i < N; i++) {
+    for(size_t i = 0; i < N; i++) {
         v.push_back(rand());
     }
     std::cout << "Random ints initialized. Testing runtime performance...\n";
     start = clock::now();
-    for(uint64_t i = 0; i < N; i++) {
-        uint64_t ell = i*i - v[i]*i + 5;
+    for(size_t i = 0; i < N; i++) {
+        size_t ell = i*i - v[i]*i + 5;
         std::cout << "ell = " << ell << ", ";
-        uint64_t k = getNumNodes(ell);
-        constBiNode<uint64_t> root[k];
+        size_t k = getNumNodes(ell);
+        constBiNode<size_t> root[k];
         initUintConstBiTree(root, ell);
         printRoot(root, k);
     }
@@ -260,15 +260,15 @@ void time_const_tree() {
 }
 
 // Times how fast the call to the function omega is
-auto omega_fcn_time(std::vector<uint64_t>& Nvec) {
+size_t omega_fcn_time(std::vector<size_t>& Nvec) {
     using std::chrono::duration_cast;
     using std::chrono::nanoseconds;
     typedef std::chrono::high_resolution_clock clock;
 
     auto start = clock::now();
     for(auto& Nj : Nvec) {
-        for(uint64_t i = 0; i < Nj; i++) {
-            for(uint64_t j = 0; j < Nj; j++) {
+        for(size_t i = 0; i < Nj; i++) {
+            for(size_t j = 0; j < Nj; j++) {
                 Complex w0 = omega(i*j, Nj, Direction::forward);
                 if(Nj == 16) std::cout << w0 << "\n";
             }
@@ -279,15 +279,15 @@ auto omega_fcn_time(std::vector<uint64_t>& Nvec) {
 }
 
 // Times how fast using the Omega class is
-auto omega_class_time(std::vector<uint64_t>& Nvec, Omega& w) {
+size_t omega_class_time(std::vector<size_t>& Nvec, Omega& w) {
     using std::chrono::duration_cast;
     using std::chrono::nanoseconds;
     typedef std::chrono::high_resolution_clock clock;
 
     auto start = clock::now();
     for(auto& Nj : Nvec) {
-        for(uint64_t i = 0; i < Nj; i++) {
-            for(uint64_t j = 0; j < Nj; j++) {
+        for(size_t i = 0; i < Nj; i++) {
+            for(size_t j = 0; j < Nj; j++) {
                 Complex w0 = w(i, j, Nj);
                 if(Nj == 16) std::cout << w0 << "\n";
             }
@@ -300,15 +300,15 @@ auto omega_class_time(std::vector<uint64_t>& Nvec, Omega& w) {
 // Compares the time of the omega function to the omega class
 void time_omega() {
     std::cout << "Comparing the time to use the Omega class vs. explicitly constructing omega at every iteration...\n";
-    uint64_t N_factors = 10;
+    size_t N_factors = 10;
     int Njmax = 10;
     
     auto rand = std::bind(std::uniform_int_distribution<>{1,Njmax}, std::default_random_engine{});
 
     uint Ntrials = 100;
     
-    std::vector<uint64_t> Nvec {};
-    uint64_t N = 1;
+    std::vector<size_t> Nvec {};
+    size_t N = 1;
     for(uint i = 0; i < N_factors; i++) {
         uint tmp = rand();
         N *= tmp;

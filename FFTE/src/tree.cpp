@@ -1,14 +1,4 @@
-/* Header file for C++14 and up */
-#ifndef TREE_HPP
-#define TREE_HPP
-/**
- * Code Author: Danny Sharp
- * This file is part of FFTE (Fast Fourier Transform Engine)
- */
-
-
-#include <iostream>
-#include "algos.hpp"
+#include "tree.hpp"
 
 // We use this because it's a variable used in the factor function, so by defining it beforehand,
 // going out of bounds on memory is much harder
@@ -17,10 +7,10 @@
 /* Statically allocated array of factors that are known at compile-time. These
  * are not necessarily prime, just ordered in the way that we prioritize.
  */
-static constexpr size_t factors[FACTORS_LEN] {4, 2, 3, 5, 7, 11, 13, 16, 17, 19, 23, 29, 31, 37, 41};
+static const size_t factors[FACTORS_LEN] {4, 2, 3, 5, 7, 11, 13, 16, 17, 19, 23, 29, 31, 37, 41};
 
 // Function to find the smallest usable factor of f at compile-time.
-constexpr size_t factor(const size_t f) {
+size_t factor(const size_t f) {
     size_t k = 0;
     // Prioritize factors in the factors array
     for(; k < FACTORS_LEN; k++) {
@@ -36,23 +26,8 @@ constexpr size_t factor(const size_t f) {
     return f;
 }
 
-/* This is a generic class designed to be used as a
- * compile-time ready tree. It is not used anywhere here
- * except for debugging purposes
- */
-template<typename T>
-class constBiNode {
-    private:
-    public:
-        T elem;
-        size_t left = 0;
-        size_t right = 0;
-        constexpr constBiNode() = default;
-        constexpr constBiNode(const T e) {elem = e;}
-};
-
 // Check if n is a power of pow
-constexpr bool power_of(const size_t n, const size_t pow) {
+bool power_of(const size_t n, const size_t pow) {
     size_t k = n;
     if(pow == 2) {
         uint8_t sum = 0x1 & n;
@@ -66,24 +41,24 @@ constexpr bool power_of(const size_t n, const size_t pow) {
 // We first check if N is a power of something.
 // Then, we check if it has powers of numbers
 // Then, if that doesn't work, we just factor it.
-constexpr size_t numNodesFactorHelper(const size_t N) {
+uint64_t numNodesFactorHelper(const uint64_t N) {
     if(power_of(N, 4) ||
        power_of(N, 2) ||
        power_of(N, 3)) {
         return N;
     }
     if((N % 4) == 0) {
-        size_t k = N;
+        uint64_t k = N;
         while ((k % 4) == 0) k /= 4;
         return N / k;
     }
     if((N % 2) == 0) {
-        size_t k = N;
+        uint64_t k = N;
         while ((k % 2) == 0) k /= 2;
         return N / k;
     }
     if((N % 3) == 0) {
-        size_t k = N;
+        uint64_t k = N;
         while ((k % 3) == 0) k /= 3;
         return N / k;
     }
@@ -92,14 +67,14 @@ constexpr size_t numNodesFactorHelper(const size_t N) {
 
 // This is a placeholder for what we need when
 // prime algorithms are introduced
-constexpr size_t getLeftover(const size_t N, const size_t k) {
+size_t getLeftover(const size_t N, const size_t k) {
     return N / k;
 }
 
 // We first check if N is a power of something.
 // Then, we check if it has powers of numbers
 // Then, if that doesn't work, we just factor it.
-constexpr fft_fptr fptrFactorHelper(const size_t N, size_t* k) {
+fft_fptr fptrFactorHelper(const size_t N, size_t* k) {
     if(power_of(N, 4)) {
         *k = N;
         return pow2_FFT;
@@ -137,7 +112,7 @@ constexpr fft_fptr fptrFactorHelper(const size_t N, size_t* k) {
 /* Initialize an fft tree given an appropriately sized empty array of 
  * function nodes to hold the information
  */
-constexpr size_t init_fft_tree(biFuncNode* sRoot, const size_t N) {
+size_t init_fft_tree(biFuncNode* sRoot, const size_t N) {
     size_t k = 0;
     fft_fptr fptr = fptrFactorHelper(N, &k);
     sRoot->sz = N;
@@ -151,18 +126,46 @@ constexpr size_t init_fft_tree(biFuncNode* sRoot, const size_t N) {
     sRoot->left = 1;
     sRoot->right = 1 + l;
     return 1 + l + r;
-
 }
 
 // Get the number of nodes appropriate for a given length signal, N
-constexpr size_t getNumNodes(const size_t N) {
+size_t getNumNodes(const size_t N) {
     size_t k = numNodesFactorHelper(N);
     if(k == N) return 1;
     return 1 + getNumNodes(k) + getNumNodes(getLeftover(N, k));
 }
 
+// Print the nodes of a uint tree as they're stored in the length N array root
+void printRoot(constBiNode<size_t>* root, size_t N) {
+    std::cout << "root[" << N << "] = ";
+    for(size_t i = 0; i < N; i++) std::cout << root[i].elem << ", ";
+    std::cout << "\n";
+}
+
+// Print the nodes using a pre-order traversal
+void printTree(constBiNode<size_t>* root) {
+    std::cout << root->elem;
+    if(!(root->left || root->right)) return;
+    std::cout << ": (";
+    if(root->left)  printTree(root + root->left);
+    std::cout << ", ";
+    if(root->right) printTree(root + root->right);
+    std::cout << ")";
+}
+
+// print the nodes of an FFT tree using a pre-order traversal
+void printTree(biFuncNode* root) {
+    std::cout << root->sz;
+    if(!(root->left || root->right)) return;
+    std::cout << ": (";
+    if(root->left)  printTree(root + root->left);
+    std::cout << ", ";
+    if(root->right) printTree(root + root->right);
+    std::cout << ")";
+}
+
 // Initialize an unsigned integer tree (useful for debugging the tree construction)
-constexpr size_t initUintConstBiTree(constBiNode<size_t>* sRoot, const size_t N) {
+size_t initUintConstBiTree(constBiNode<size_t>* sRoot, const size_t N) {
     size_t k = numNodesFactorHelper(N);
     (*sRoot).elem = N;
     if (k == N) return 1;
@@ -174,33 +177,3 @@ constexpr size_t initUintConstBiTree(constBiNode<size_t>* sRoot, const size_t N)
     sRoot->right = 1 + l;
     return 1 + l + r;
 }
-
-// Print the nodes of a uint tree as they're stored in the length N array root
-inline void printRoot(constBiNode<size_t>* root, size_t N) {
-    std::cout << "root[" << N << "] = ";
-    for(size_t i = 0; i < N; i++) std::cout << root[i].elem << ", ";
-    std::cout << "\n";
-}
-
-// Print the nodes using a pre-order traversal
-inline void printTree(constBiNode<size_t>* root) {
-    std::cout << root->elem;
-    if(!(root->left || root->right)) return;
-    std::cout << ": (";
-    if(root->left)  printTree(root + root->left);
-    std::cout << ", ";
-    if(root->right) printTree(root + root->right);
-    std::cout << ")";
-}
-
-// print the nodes of an FFT tree using a pre-order traversal
-inline void printTree(biFuncNode* root) {
-    std::cout << root->sz;
-    if(!(root->left || root->right)) return;
-    std::cout << ": (";
-    if(root->left)  printTree(root + root->left);
-    std::cout << ", ";
-    if(root->right) printTree(root + root->right);
-    std::cout << ")";
-}
-#endif

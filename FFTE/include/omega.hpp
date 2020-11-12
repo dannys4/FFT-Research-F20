@@ -17,11 +17,11 @@ class Omega { // exp(2pi i j / N)
     using ComplexArr = std::vector<Complex>;
 
     private:
-        uint64_t N; // Size of array
+        size_t N; // Size of array
         ComplexArr data; // Where data is held
 
         // Initialize N and data (assumes dir is predetermined)
-        void init(uint64_t length) {
+        void init(size_t length) {
             N = length;
 
             // Base the initialization on an exponential factor with
@@ -33,7 +33,7 @@ class Omega { // exp(2pi i j / N)
             Complex w = w0;
             data = ComplexArr(N);
             data[0] = Complex(1., 0.);
-            for(uint64_t k = 1; k < N; k++) {
+            for(size_t k = 1; k < N; k++) {
                 data[k] = w;
                 w = w*w0;
             }
@@ -50,7 +50,7 @@ class Omega { // exp(2pi i j / N)
         explicit Omega(Direction d): dir(d) {}
 
         // Constructor that also initializes the object
-        explicit Omega(uint64_t length, Direction d): dir(d) {
+        explicit Omega(size_t length, Direction d): dir(d) {
             init(length);
         }
 
@@ -63,7 +63,7 @@ class Omega { // exp(2pi i j / N)
         }
 
         // Initialize the Omega object post-construction
-        void operator()(uint64_t length) {
+        void operator()(size_t length) {
             init(length);
         }
 
@@ -71,24 +71,24 @@ class Omega { // exp(2pi i j / N)
         bool operator()() {return data.size() != 0;}
 
         // Return the appropriate twiddle, if possible
-        Complex operator()(uint64_t num, uint64_t denom) {
+        Complex operator()(size_t num, size_t denom) {
             if(N % denom || num > denom) {
                 throw "Invalid arguments for this Omega!\n";
             }
-            uint64_t s = N / denom;
+            size_t s = N / denom;
             return data[num*s];
         }
 
         // Constructs appropriate exponential factor if number > denom
-        Complex operator()(uint64_t num1, uint64_t num2, uint64_t denom) {
+        Complex operator()(size_t num1, size_t num2, size_t denom) {
             if(num1*num2 < denom) return this->operator()(num1*num2, denom);
             
-            uint64_t min = std::min<uint64_t>(num1, num2);
-            uint64_t max = std::max<uint64_t>(num1, num2);
+            size_t min = std::min<size_t>(num1, num2);
+            size_t max = std::max<size_t>(num1, num2);
             
             Complex w0 = this->operator()(max, denom);
             Complex w = w0;
-            for(uint64_t i = 1; i < min; i++) w = w0*w;
+            for(size_t i = 1; i < min; i++) w = w0*w;
             return w;
         }
 };

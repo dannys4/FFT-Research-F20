@@ -14,8 +14,9 @@ static constexpr uint8_t BitReverseTable256[256] =
     R6(0), R6(2), R6(1), R6(3)
 };
 
-constexpr uint64_t reverse(uint64_t v, uint8_t nbits) {
-    uint64_t c = 0;
+/*
+constexpr size_t reverse(size_t v, uint8_t nbits) {
+    size_t c = 0;
     uint8_t * p = (uint8_t *) &v;
     uint8_t * q = (uint8_t *) &c;
     q[7] = BitReverseTable256[p[0]]; 
@@ -28,6 +29,7 @@ constexpr uint64_t reverse(uint64_t v, uint8_t nbits) {
     q[0] = BitReverseTable256[p[7]];
     return c >> (64-nbits);
 }
+*/
 
 // Calculate an omega factor for the FFT. This isn't used by me in practice.
 Complex omega(uint power, uint N, Direction dir) {
@@ -37,7 +39,7 @@ Complex omega(uint power, uint N, Direction dir) {
 }
 
 // Recursive helper function implementing a classic C-T FFT
-void pow2_FFT_helper(uint64_t N, Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, Omega& w) {
+void pow2_FFT_helper(size_t N, Complex* x, Complex* y, size_t s_in, size_t s_out, Omega& w) {
     
     // Trivial case
     if(N == 1) {
@@ -64,14 +66,14 @@ void pow2_FFT_helper(uint64_t N, Complex* x, Complex* y, uint64_t s_in, uint64_t
 }
 
 // External function to call the C-T radix-2 FFT
-void pow2_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot, Omega& w) {
-    const uint64_t N = sRoot->sz; // Size of problem
+void pow2_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Omega& w) {
+    const size_t N = sRoot->sz; // Size of problem
     if(!w()) w(N);                // Initialize the Omega if necessary
     pow2_FFT_helper(N, x, y, s_in, s_out, w); // Call the radix-2 FFT
 }
 
 // Internal helper function to perform a DFT in O(n^2) time
-void DFT_helper(uint64_t size, Complex* sig_in, Complex* sig_out, uint64_t s_in, uint64_t s_out, Omega& w) {
+void DFT_helper(size_t size, Complex* sig_in, Complex* sig_out, size_t s_in, size_t s_out, Omega& w) {
     
     // Find the first element 
     Complex tmp = sig_in[0];
@@ -91,7 +93,7 @@ void DFT_helper(uint64_t size, Complex* sig_in, Complex* sig_out, uint64_t s_in,
 }
 
 // Internal helper function to perform a DFT without an Omega object (there's no reason to initialize one)
-void DFT_helper(uint64_t size, Complex* sig_in, Complex* sig_out, uint64_t s_in, uint64_t s_out, Direction dir) {
+void DFT_helper(size_t size, Complex* sig_in, Complex* sig_out, size_t s_in, size_t s_out, Direction dir) {
     // Twiddle with smallest numerator
     Complex w0 = omega(1, size, dir);
 
@@ -127,7 +129,7 @@ void DFT_helper(uint64_t size, Complex* sig_in, Complex* sig_out, uint64_t s_in,
 }
 
 // External-facing function to properly call the internal DFT function
-void DFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sLeaf, Omega& w) {
+void DFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sLeaf, Omega& w) {
     if(!w()) {
         DFT_helper(sLeaf->sz, x, y, s_in, s_out, w.dir);
     }
@@ -135,21 +137,21 @@ void DFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode*
 }
 
 // External-facing reference DFT for testing purposes
-void reference_DFT(uint64_t N, Complex* x, Complex* y, Direction dir) {
+void reference_DFT(size_t N, Complex* x, Complex* y, Direction dir) {
     DFT_helper(N, x, y, 1, 1, dir);
 }
 
 // External & Internal function for radix-N1 C-T FFTs
-void composite_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot, Omega& w) {
+void composite_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Omega& w) {
     // Retrieve N
-    uint64_t N = sRoot->sz;
+    size_t N = sRoot->sz;
     
     // Initialize the omega if necessary
     if(!w()) w(N);
 
     // Find the children on the call-graph
-    constBiFuncNode* left = sRoot + sRoot->left;
-    constBiFuncNode* right = sRoot + sRoot->right;
+    biFuncNode* left = sRoot + sRoot->left;
+    biFuncNode* right = sRoot + sRoot->right;
 
     // Get the size of the sub-problems
     uint N1 = left->sz;
@@ -187,12 +189,26 @@ void composite_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constB
     free(z);
 }
 
+// A factoring function for the reference composite FFT
+size_t referenceFactor(const size_t f) {
+    // Check if it's even
+    if((f & 0x1) == 0) return 2;
+
+    // Check all odd numbers after that
+    for(int k = 3; k*k < f; k+=2) {
+        if( f % k == 0 ) return k;
+    }
+
+    // return f if no factor was found
+    return f;
+}
+
 // Internal-facing radix-N1 C-T FFT for reference. Doesn't use any call graph or Omega class.
 // Used for checking correctness of output
-void reference_composite_FFT_helper(uint64_t N, Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, Direction dir) {
+void reference_composite_FFT_helper(size_t N, Complex* x, Complex* y, size_t s_in, size_t s_out, Direction dir) {
     
     // Find the factors of N
-    uint N1 = factor(N);
+    uint N1 = referenceFactor(N);
     uint N2 = N/N1;
     
     // Execute a DFT if necessary
@@ -224,12 +240,12 @@ void reference_composite_FFT_helper(uint64_t N, Complex* x, Complex* y, uint64_t
 }
 
 // External-facing function to calculate a composite FFT using the reference code.
-void reference_composite_FFT(uint64_t N, Complex* x, Complex* y, Direction dir) {
+void reference_composite_FFT(size_t N, Complex* x, Complex* y, Direction dir) {
     reference_composite_FFT_helper(N, x, y, 1, 1, dir);
 }
 
 // Internal recursive helper-function that calculates the FFT of a signal with length 3^k
-void pow3_FFT_helper(uint64_t N, Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, Omega& w, Complex& plus120, Complex& minus120) {
+void pow3_FFT_helper(size_t N, Complex* x, Complex* y, size_t s_in, size_t s_out, Omega& w, Complex& plus120, Complex& minus120) {
     
     // Calculate the DFT manually if necessary
     if(N == 3) {
@@ -240,7 +256,7 @@ void pow3_FFT_helper(uint64_t N, Complex* x, Complex* y, uint64_t s_in, uint64_t
     }
 
     // Calculate the size of the sub-problem
-    uint64_t Nprime = N/3;
+    size_t Nprime = N/3;
 
     // Divide into sub-problems
     pow3_FFT_helper(Nprime, x, y, s_in*3, s_out, w, plus120, minus120);
@@ -248,7 +264,7 @@ void pow3_FFT_helper(uint64_t N, Complex* x, Complex* y, uint64_t s_in, uint64_t
     pow3_FFT_helper(Nprime, x+2*s_in, y+2*Nprime*s_out, s_in*3, s_out, w, plus120, minus120);
 
     // Combine the sub-problem solutions
-    for(uint64_t k = 0; k < Nprime; k++) {
+    for(size_t k = 0; k < Nprime; k++) {
         // Index calculation
         auto k1 = k * s_out;
         auto k2 = (  Nprime + k) * s_out;
@@ -270,8 +286,8 @@ void pow3_FFT_helper(uint64_t N, Complex* x, Complex* y, uint64_t s_in, uint64_t
 }
 
 // External-facing function for performing an FFT on signal with length N = 3^k
-void pow3_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFuncNode* sRoot, Omega& w) {
-    const uint64_t N = sRoot->sz;
+void pow3_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Omega& w) {
+    const size_t N = sRoot->sz;
     if(!w()) w(N);
     Complex plus120 {-0.5, -sqrt(3)/2.};
     Complex minus120 {-0.5, sqrt(3)/2.};
@@ -283,7 +299,7 @@ void pow3_FFT(Complex* x, Complex* y, uint64_t s_in, uint64_t s_out, constBiFunc
 
 #if 0
 // DOES NOT WORK, DO NOT USE
-void pow2_FFT_it(Complex* sig_in, uint64_t size, Complex* sig_out) {
+void pow2_FFT_it(Complex* sig_in, size_t size, Complex* sig_out) {
     int log_2_sz = 0;
     while(size >> (log_2_sz+1)) log_2_sz++;
 
@@ -292,7 +308,7 @@ void pow2_FFT_it(Complex* sig_in, uint64_t size, Complex* sig_out) {
     *Omega = Complex(1., 0.);
     sig_out[0] = sig_in[0];
     sig_out[size-1] = sig_in[size-1];
-    for(uint64_t i = 1; i < (size>>1); i++){
+    for(size_t i = 1; i < (size>>1); i++){
         auto rev_i = reverse(i, log_2_sz);
         sig_out[i] = sig_in[rev_i];
         sig_out[rev_i] = sig_in[i];
@@ -300,10 +316,10 @@ void pow2_FFT_it(Complex* sig_in, uint64_t size, Complex* sig_out) {
     }
 
     for(int i = 1; i <= log_2_sz; i++) {
-        uint64_t L_o = 2  << (i-1);
-        uint64_t r   = size >> i;
-        for(uint64_t j = 0; j < r; j++) {
-            for(uint64_t k = 0; k < L_o; k++) {
+        size_t L_o = 2  << (i-1);
+        size_t r   = size >> i;
+        for(size_t j = 0; j < r; j++) {
+            for(size_t k = 0; k < L_o; k++) {
                 Complex sig_out_tmp = sig_out[j*L_o+k];
                 sig_out[j*L_o+k]     = sig_out_tmp + Omega[k] * sig_out[(j+1)*L_o+k];
                 sig_out[(j+1)*L_o+k] = sig_out_tmp - Omega[k] * sig_out[(j+1)*L_o+k];

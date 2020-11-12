@@ -8,9 +8,17 @@
 #include <functional>
 #include <chrono>
 #include <complex>
-#include "constTree.hpp"
 #include "omega.hpp"
 #include <cassert>
+
+#define MODERN_CPP (defined(__cplusplus) && ((__cplusplus / 100) >= 2014))
+#if MODERN_CPP
+#include "constTree.hpp"
+#else
+#include "tree.hpp"
+#endif
+
+
 
 void check_fft(Direction dir);
 void check_fft_tree();

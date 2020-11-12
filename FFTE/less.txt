@@ -1,0 +1,40 @@
+g++-9 -I./include -mfma -mavx2 -ggdb3 -Wall -std=c++11 -c src/driver.cpp -o src/obj/driver.o
+g++-9 -I./include -mfma -mavx2 -ggdb3 -Wall -std=c++11 -c src/algos.cpp -o src/obj/algos.o
+g++-9 -I./include -mfma -mavx2 -ggdb3 -Wall -std=c++11 -c src/test.cpp -o src/obj/test.o
+g++-9 -I./include -mfma -mavx2 -ggdb3 -Wall -std=c++11 -o run src/obj/driver.o src/obj/algos.o src/obj/test.o 
+src/obj/test.o: In function `_mm_setzero_pd()':
+/home/dsharp/Documents/FFT-Research-F20/FFTE/./include/tree.hpp:21: multiple definition of `factor(unsigned long)'
+src/obj/driver.o:/home/dsharp/Documents/FFT-Research-F20/FFTE/./include/tree.hpp:21: first defined here
+src/obj/test.o: In function `power_of(unsigned long, unsigned long)':
+/home/dsharp/Documents/FFT-Research-F20/FFTE/./include/tree.hpp:38: multiple definition of `power_of(unsigned long, unsigned long)'
+src/obj/driver.o:/home/dsharp/Documents/FFT-Research-F20/FFTE/./include/tree.hpp:38: first defined here
+src/obj/test.o: In function `numNodesFactorHelper(unsigned long)':
+/home/dsharp/Documents/FFT-Research-F20/FFTE/./include/tree.hpp:52: multiple definition of `numNodesFactorHelper(unsigned long)'
+src/obj/driver.o:/home/dsharp/Documents/FFT-Research-F20/FFTE/./include/tree.hpp:52: first defined here
+src/obj/test.o: In function `getLeftover(unsigned long, unsigned long)':
+/home/dsharp/Documents/FFT-Research-F20/FFTE/./include/tree.hpp:78: multiple definition of `getLeftover(unsigned long, unsigned long)'
+src/obj/driver.o:/home/dsharp/Documents/FFT-Research-F20/FFTE/./include/tree.hpp:78: first defined here
+src/obj/test.o: In function `fptrFactorHelper(unsigned long, unsigned long*)':
+/home/dsharp/Documents/FFT-Research-F20/FFTE/./include/tree.hpp:85: multiple definition of `fptrFactorHelper(unsigned long, unsigned long*)'
+src/obj/driver.o:/home/dsharp/Documents/FFT-Research-F20/FFTE/./include/tree.hpp:85: first defined here
+src/obj/test.o: In function `init_fft_tree(biFuncNode*, unsigned long)':
+/home/dsharp/Documents/FFT-Research-F20/FFTE/./include/tree.hpp:123: multiple definition of `init_fft_tree(biFuncNode*, unsigned long)'
+src/obj/driver.o:/home/dsharp/Documents/FFT-Research-F20/FFTE/./include/tree.hpp:123: first defined here
+src/obj/test.o: In function `getNumNodes(unsigned long)':
+/home/dsharp/Documents/FFT-Research-F20/FFTE/./include/tree.hpp:140: multiple definition of `getNumNodes(unsigned long)'
+src/obj/driver.o:/home/dsharp/Documents/FFT-Research-F20/FFTE/./include/tree.hpp:140: first defined here
+src/obj/test.o: In function `printRoot(constBiNode<unsigned long>*, unsigned long)':
+/home/dsharp/Documents/FFT-Research-F20/FFTE/./include/tree.hpp:162: multiple definition of `printRoot(constBiNode<unsigned long>*, unsigned long)'
+src/obj/driver.o:/home/dsharp/Documents/FFT-Research-F20/FFTE/./include/tree.hpp:162: first defined here
+src/obj/test.o: In function `printTree(constBiNode<unsigned long>*)':
+/home/dsharp/Documents/FFT-Research-F20/FFTE/./include/tree.hpp:169: multiple definition of `printTree(constBiNode<unsigned long>*)'
+src/obj/driver.o:/home/dsharp/Documents/FFT-Research-F20/FFTE/./include/tree.hpp:169: first defined here
+src/obj/test.o: In function `printTree(biFuncNode*)':
+/home/dsharp/Documents/FFT-Research-F20/FFTE/./include/tree.hpp:180: multiple definition of `printTree(biFuncNode*)'
+src/obj/driver.o:/home/dsharp/Documents/FFT-Research-F20/FFTE/./include/tree.hpp:180: first defined here
+src/obj/test.o: In function `initUintConstBiTree(constBiNode<unsigned long>*, unsigned long)':
+/home/dsharp/Documents/FFT-Research-F20/FFTE/./include/tree.hpp:191: multiple definition of `initUintConstBiTree(constBiNode<unsigned long>*, unsigned long)'
+src/obj/driver.o:/home/dsharp/Documents/FFT-Research-F20/FFTE/./include/tree.hpp:191: first defined here
+collect2: error: ld returned 1 exit status
+makefile:23: recipe for target 'run' failed
+make: *** [run] Error 1
