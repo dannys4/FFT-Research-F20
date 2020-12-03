@@ -47,9 +47,15 @@ namespace FFTE {
                 return Complex(ret);
             }
 
-            Complex& operator/=(const double y) {
+            Complex operator/=(const double y) {
                 var = _mm_div_pd(var, _mm_set_pd1(y));
                 return *this;
+            }
+
+            Complex conjugate() {
+                __m128d conj = _mm_addsub_pd(_mm_setzero_pd(), var);
+                Complex c = Complex(conj);
+                return c;
             }
 
             /* 
@@ -61,8 +67,16 @@ namespace FFTE {
             * auto mult = _mm_fmaddsub_pd(this->var, cc, dba);
             */
             Complex operator*(const Complex& y) {
-                auto mult = _mm_fmaddsub_pd(var, _mm_permute_pd(y.var, 0), _mm_mul_pd(_mm_permute_pd(var, 1), _mm_permute_pd(y.var, 3)));
-                return Complex(mult);
+                __m128d mult = _mm_fmaddsub_pd(var, _mm_permute_pd(y.var, 0), _mm_mul_pd(_mm_permute_pd(var, 1), _mm_permute_pd(y.var, 3)));
+                Complex ret = Complex(mult);
+                return ret;
+            }
+
+            // Performs multiplication between a double and Complex number
+            Complex operator*(double y) {
+                __m128d mult = _mm_mul_pd(_mm_set_pd1(y), var);
+                Complex c =  Complex(mult);
+                return c;
             }
 
             // Returns the var member of this class
@@ -89,6 +103,15 @@ namespace FFTE {
         else os << tmp[0] << " - " << -tmp[1] << "i";
         free(tmp);
         return os;
+    }
+
+    inline Complex operator*(double d, Complex c) {
+        return c*d;
+    }
+
+    inline Complex operator/(double d, Complex c) {
+        Complex ret = d * c.conjugate() / c.modulus();
+        return ret;
     }
 }
 #endif

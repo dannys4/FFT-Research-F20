@@ -4,7 +4,26 @@ namespace FFTE {
     /* Statically allocated array of factors that are known at compile-time. These
     * are not necessarily prime, just ordered in the way that we prioritize.
     */
-    static const size_t factors[FACTORS_LEN] {4, 2, 3, 5, 7, 11, 13, 16, 17, 19, 23, 29, 31, 37, 41};
+    static const size_t factors[FACTORS_LEN] {   4,    2,    3,    5,    7,   11,   13,   16,   17,   19,
+                                                23,   29,   31,   37,   41,   43,   47,   53,   59,   61,
+                                                67,   71,   73,   79,   83,   89,   97,  101,  103,  107,
+                                               109,  113,  127,  131,  137,  139,  149,  151,  157,  163,
+                                               167,  173,  179,  181,  191,  193,  197,  199,  211,  223,
+                                               227,  229,  233,  239,  241,  251,  257,  263,  269,  271,
+                                               277,  281,  283,  293,  307,  311,  313,  317,  331,  337,
+                                               347,  349,  353,  359,  367,  373,  379,  383,  389,  397,
+                                               401,  409,  419,  421,  431,  433,  439,  443,  449,  457,
+                                               461,  463,  467,  479,  487,  491,  499,  503,  509,  521,
+                                               523,  541,  547,  557,  563,  569,  571,  577,  587,  593,
+                                               599,  601,  607,  613,  617,  619,  631,  641,  643,  647,
+                                               653,  659,  661,  673,  677,  683,  691,  701,  709,  719,
+                                               727,  733,  739,  743,  751,  757,  761,  769,  773,  787,
+                                               797,  809,  811,  821,  823,  827,  829,  839,  853,  857,
+                                               859,  863,  877,  881,  883,  887,  907,  911,  919,  929,
+                                               937,  941,  947,  953,  967,  971,  977,  983,  991,  997,
+                                              1009, 1013, 1019, 1021, 1031, 1033, 1039, 1049, 1051, 1061,
+                                              1063, 1069, 1087, 1091, 1093, 1097, 1103, 1109, 1117, 1123,
+                                              1129, 1151, 1153, 1163, 1171, 1181, 1187, 1193, 1201, 1213};
 
     // Function to find the smallest usable factor of f at compile-time.
     size_t factor(const size_t f) {
@@ -21,6 +40,59 @@ namespace FFTE {
 
         // return f if no factor was found
         return f;
+    }
+
+    // Find all the factors to test for primitive root
+    std::vector<size_t> findFactorRader(size_t factor) {
+        size_t f = factor;
+        std::vector<size_t> ret {};
+        if((f % 2) == 0) {
+            while((f % 2) == 0) {
+                f /= 2;
+            }
+            ret.push_back(factor/2);
+        }
+
+        for(size_t k = 3; k <= f; k += 2) {
+            if((f % k) == 0) {
+                while((f % k) == 0) f /= k;
+                ret.push_back(factor/k);
+            }
+        }
+        return ret;
+    }
+
+    // Get the power of base
+    size_t modPow(size_t base, size_t pow, size_t mod) {
+        size_t ret = 1;
+        while(pow > 0) {
+            if((pow & 0x1) != 0) {
+                ret = (ret*base) % mod;
+            }
+            base = (base*base) % mod;
+            pow >>= 1;
+        }
+        return ret;
+    }
+
+    // Assume p is prime
+    size_t primeRoot(size_t p) {
+        size_t phi = p - 1;
+        auto f_vec = findFactorRader(phi);
+        bool ret = false;
+        size_t curr = 1;
+        while(!ret) {
+            curr++;
+            for(auto& i : f_vec) {
+                size_t pow = modPow(curr, i, p);
+                if(pow == 1) {
+                    ret = false; 
+                    break;
+                }
+                ret = true;
+            }
+        }
+        return curr;
     }
 
     // Check if n is a power of pow
@@ -40,32 +112,34 @@ namespace FFTE {
     // Then, if that doesn't work, we just factor it.
     uint64_t numNodesFactorHelper(const uint64_t N) {
         if(power_of(N, 4) ||
-        power_of(N, 2) ||
-        power_of(N, 3)) {
+           power_of(N, 2) ||
+           power_of(N, 3)) {
             return N;
         }
         if((N % 4) == 0) {
-            uint64_t k = N;
+            size_t k = N;
             while ((k % 4) == 0) k /= 4;
             return N / k;
         }
         if((N % 2) == 0) {
-            uint64_t k = N;
+            size_t k = N;
             while ((k % 2) == 0) k /= 2;
             return N / k;
         }
         if((N % 3) == 0) {
-            uint64_t k = N;
+            size_t k = N;
             while ((k % 3) == 0) k /= 3;
             return N / k;
         }
-        return factor(N);
+        size_t k = factor(N);
+        return (k == N && k > RADER_MIN) ? factor(N-1) : k;
     }
 
     // This is a placeholder for what we need when
     // prime algorithms are introduced
     size_t getLeftover(const size_t N, const size_t k) {
-        return N / k;
+        if(N % k == 0) return N / k;
+        return (N-1) / k;
     }
 
     // We first check if N is a power of something.
@@ -103,7 +177,14 @@ namespace FFTE {
             return fft_type::composite;
         }
         *k = factor(N);
-        return (*k == N) ? fft_type::discrete : fft_type::composite;
+        if(*k == N) {
+            if(N > RADER_MIN) {
+                *k = factor(N-1);
+                return fft_type::rader;
+            }
+            return fft_type::discrete;
+        }
+        return fft_type::composite;
     }
 
     /* Initialize an fft tree given an appropriately sized empty array of 
@@ -112,9 +193,16 @@ namespace FFTE {
     size_t init_fft_tree(biFuncNode* sRoot, const size_t N) {
         size_t k = 0;
         fft_type type = fptrFactorHelper(N, &k);
-        *sRoot = biFuncNode(type);
+        if(type == fft_type::rader) {
+            size_t a = primeRoot(N);
+            size_t ainv = modPow(a, N-2, N); 
+            *sRoot = biFuncNode(a, ainv);
+        }
+        else {
+            *sRoot = biFuncNode(type);
+        }
         sRoot->sz = N;
-        if (k == N) {
+        if(type == fft_type::discrete) {
             return 1;
         }
         size_t q = getLeftover(N, k);

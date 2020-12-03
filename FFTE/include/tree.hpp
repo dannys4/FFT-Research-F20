@@ -9,9 +9,12 @@
 #include "algos.hpp"
 #include <iostream>
 
- // We use this because it's a variable used in the factor function, so by defining it beforehand,
+// We use this because it's a variable used in the factor function, so by defining it beforehand,
 // going out of bounds on memory is much harder
-#define FACTORS_LEN 15 
+#define FACTORS_LEN 200
+
+// This is the minimum signal size for us to use Rader's algorithm
+#define RADER_MIN 5
 
 namespace FFTE {
     /* Initialize an fft tree given an appropriately sized empty array of 

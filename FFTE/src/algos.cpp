@@ -154,10 +154,10 @@ namespace FFTE {
         biFuncNode* right = sRoot + sRoot->right;
 
         // Get the size of the sub-problems
-        uint N1 = left->sz;
-        uint N2 = right->sz;
+        size_t N1 = left->sz;
+        size_t N2 = right->sz;
 
-        /* Theoretically, this should've ever be called-- the call graph should've
+        /* Theoretically, this shouldn't ever be called-- the call graph should've
         * told us to perform a DFT here instead. However, I'm calling this just in case.
         */
         if(N1 == N) {
@@ -170,9 +170,9 @@ namespace FFTE {
         Complex* z = (Complex*) malloc(N*sizeof(Complex));
 
         // Find the FFT of the "rows" of the input signal and twiddle them accordingly
-        for(uint n1 = 0; n1 < N1; n1++) {
+        for(size_t n1 = 0; n1 < N1; n1++) {
             right->fptr(x+n1*s_in, z+N2*n1, N1*s_in, 1, right, w);
-            for(uint k2 = 1; (k2 < N2) && (n1 > 0); k2++) {
+            for(size_t k2 = 1; (k2 < N2) && (n1 > 0); k2++) {
                 z[n1*N2 + k2] = z[n1*N2 + k2]*w(n1, k2, N);
             }
         }
@@ -201,6 +201,59 @@ namespace FFTE {
 
         // return f if no factor was found
         return f;
+    }
+
+    
+    void rader_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Omega& w, size_t a, size_t ainv) {
+        // Size of the problem
+        size_t p = sRoot->sz;
+        
+        // Find the children on the call-graph
+        biFuncNode* forward = sRoot + sRoot->left;
+        biFuncNode* inverse = sRoot + sRoot->right;
+
+        // Temporary workspace
+        Complex* z = (Complex*) malloc((p-1)*sizeof(Complex));
+
+        // Loop variables
+        int ak = 1;
+        int akinv = 1;
+        Complex y0 = x[0];
+
+        // First, "invert" the order of x
+        for(size_t k = 0; k < (p-1); k++) {
+            y[k*s_out] = x[akinv*s_in];
+            y0 = y0 + y[k*s_out];
+            ak = (ak*a) % p;
+            akinv = (akinv*ainv) % p;
+        }
+
+        // Convolve the resulting vector with twiddle vector
+
+        // First fft the resulting shuffled vector
+        forward->fptr(y, z, s_out, 1, forward, w);
+
+        // Perform cyclic convolution
+        for(size_t m = 0; m < (p-1); m++) {
+            Complex Cm = w(1, p);
+            ak = a;
+            for(size_t k = 1; k < (p-1); k++) {
+                Cm = Cm + omega(p*(k*m+ak) - ak, p*(p-1), w.dir);
+                ak = (ak*a) % p;
+            }
+            y[m*s_out] = z[m]*Cm;
+        }
+
+        // Bring back into signal domain
+        inverse->fptr(y, z, s_out, 1, inverse, w.inv());
+
+        // Shuffle as needed
+        ak = 1;
+        y[0] = y0;
+        for(size_t m = 0; m < (p-1); m++) {
+            y[ak*s_out] = x[0] + (z[m]/((double) (p-1)));
+            ak = (ak*a) % p;
+        }
     }
 
     // Internal-facing radix-N1 C-T FFT for reference. Doesn't use any call graph or Omega class.

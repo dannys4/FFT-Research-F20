@@ -20,6 +20,7 @@ namespace FFTE {
         private:
             size_t N; // Size of array
             ComplexArr data; // Where data is held
+            bool invert = false; // Whether to invert results
 
             // Initialize N and data (assumes dir is predetermined)
             void init(size_t length) {
@@ -40,6 +41,11 @@ namespace FFTE {
                 }
             }
 
+            // Change whether to invert the data
+            void invert_data() {
+                invert = !invert;
+            }
+
         public:
             // Public facing member that ultimately determines whether
             // the FFT is forward or inverse
@@ -56,7 +62,10 @@ namespace FFTE {
             }
 
             // Constructor from other Omega
-            explicit Omega(const Omega& o): N(o.N), data(o.data), dir(o.dir) {};
+            explicit Omega(const Omega& o): N(o.N), data(o.data), invert(o.invert), dir(o.dir) {};
+
+            // Constructor from other Omega
+            explicit Omega(const Omega& o, bool new_inv): N(o.N), data(o.data), invert(new_inv), dir(o.dir) {};
 
             // Copy assignment
             Omega& operator=(const Omega& o) {
@@ -77,7 +86,7 @@ namespace FFTE {
                     throw "Invalid arguments for this Omega!\n";
                 }
                 size_t s = N / denom;
-                return data[num*s];
+                return (invert) ? 1./data[num*s] : data[num*s];
             }
 
             // Constructs appropriate exponential factor if number > denom
@@ -90,7 +99,14 @@ namespace FFTE {
                 Complex w0 = this->operator()(max, denom);
                 Complex w = w0;
                 for(size_t i = 1; i < min; i++) w = w0*w;
-                return w;
+                return (invert) ? 1./w : w;
+            }
+
+            // "inverts" the data
+            Omega& inv() {
+                Omega& ret (*this);
+                ret.invert=!invert;
+                return ret;
             }
     };
 }

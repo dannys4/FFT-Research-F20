@@ -15,16 +15,6 @@ namespace FFTE {
     // Need forward declaration for the using directive
     class biFuncNode;
 
-    /* This is the standard fft function call:
-    * N, x, y, s_in, s_out.
-    * N     = input signal length
-    * x     = input signal
-    * y     = output signal
-    * s_in  = the distance (stride) between each input
-    * s_out = the distance (stride) between each output
-    */
-    using fft_fptr = void (*)(Complex*, Complex*, size_t, size_t, biFuncNode*, Omega&);
-
     // Functions in the algos implementation file facing externally
     Complex omega(uint power, uint N, Direction dir);
     void pow2_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Omega& w);
@@ -37,9 +27,11 @@ namespace FFTE {
 
     void pow3_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Omega& w);
 
-    enum fft_type {pow2, pow3, pow4, composite, discrete};
+    void rader_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Omega& w, size_t a, size_t ainv);
 
-#if MODERN_CPP
+    enum fft_type {pow2, pow3, pow4, composite, discrete, rader};
+
+#if 0
     // Functor class for performing these transforms
     class Fourier_Transform {
         private:
@@ -80,7 +72,8 @@ namespace FFTE {
         private:
             fft_type type;
         public:
-            Fourier_Transform(fft_type fft): type(fft) {}
+            explicit Fourier_Transform() = default;
+            explicit Fourier_Transform(fft_type fft): type(fft) {}
             void operator()(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Omega& w) {
                 switch(type) {
                     case fft_type::pow2: pow2_FFT(x, y, s_in, s_out, sRoot, w); break;
@@ -88,8 +81,23 @@ namespace FFTE {
                     case fft_type::pow4: pow2_FFT(x, y, s_in, s_out, sRoot, w); break;
                     case fft_type::composite: composite_FFT(x, y, s_in, s_out, sRoot, w); break;
                     case fft_type::discrete: DFT(x, y, s_in, s_out, sRoot, w); break;
-                    default: std::cerr << "NO\n"; exit(-1);
+                    default: std::cerr << "Problem creating Fourier Transform functor\n"; exit(-1);
                 }
+            }
+    };
+
+    // Special class for Rader transforms since we want the root and inverse of the root to be known
+    class Rader_Transform : public Fourier_Transform {
+        private:
+            size_t root, root_inv;
+        public:
+            // Override the constructor
+            Rader_Transform(fft_type fft) = delete;
+            Rader_Transform(size_t a, size_t ainv) {
+                root = a; root_inv = ainv;
+            }
+            void operator()(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Omega& w) {
+                rader_FFT(x, y, s_in, s_out, sRoot, w, root, root_inv);
             }
     };
 
@@ -105,6 +113,7 @@ namespace FFTE {
             size_t right = 0;      // Offset in array until right child
             biFuncNode(): fptr(fft_type::discrete) {};
             biFuncNode(fft_type type): fptr(type) {}; // Create default constructor
+            biFuncNode(size_t a, size_t ainv): fptr(Rader_Transform(a,ainv)) {};
             biFuncNode operator=(const biFuncNode o) {fptr = o.fptr; return *this;}
     };
 #endif
