@@ -231,20 +231,23 @@ namespace FFTE {
 
         // First fft the resulting shuffled vector
         subFFT->fptr(y, z, s_out, 1, subFFT, w);
+        // DFT_helper(subFFT->sz, y, z, s_out, 1, w.direction());
 
         // Perform cyclic convolution
         for(size_t m = 0; m < (p-1); m++) {
-            Complex Cm = omega(1, p, w.dir);
+            Complex Cm = omega(1, p, w.direction());
             ak = a;
             for(size_t k = 1; k < (p-1); k++) {
-                Cm = Cm + omega(p*(k*m+ak) - ak, p*(p-1), w.dir);
+                Cm = Cm + omega(p*(k*m+ak) - ak, p*(p-1), w.direction());
                 ak = (ak*a) % p;
             }
             y[m*s_out] = z[m]*Cm;
         }
 
         // Bring back into signal domain
-        subFFT->fptr(y, z, s_out, 1, subFFT, w.inv());
+        Omega winv (w.inv().direction());
+        subFFT->fptr(y, z, s_out, 1, subFFT, winv);
+        // DFT_helper(subFFT->sz, y, z, s_out, 1, w.inv().direction());
 
         // Shuffle as needed
         ak = 1;

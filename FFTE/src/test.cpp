@@ -4,9 +4,9 @@
  * This file is part of FFTE (Fast Fourier Transform Engine)
  */
 
-#define CHECKSUM_COMP 1
-#define ENTRYWISE_COMP 0
-#define FFT_LENGTH 61
+#define CHECKSUM_COMP 0
+#define ENTRYWISE_COMP 1
+#define FFT_LENGTH 7
 
 /*
  * Functions to test veracity of outputs. These check against references

@@ -109,6 +109,11 @@ namespace FFTE {
                 ret.invert=!invert;
                 return ret;
             }
+
+            // Gets the actual direction of the data
+            Direction direction() {
+                return invert ? (Direction) (-1*((int) dir)) : dir;
+            }
     };
 }
 #endif // OMEGA_HPP
