@@ -110,7 +110,7 @@ namespace FFTE {
     // We first check if N is a power of something.
     // Then, we check if it has powers of numbers
     // Then, if that doesn't work, we just factor it.
-    uint64_t numNodesFactorHelper(const uint64_t N) {
+    size_t numNodesFactorHelper(const size_t N) {
         if(power_of(N, 4) ||
            power_of(N, 2) ||
            power_of(N, 3)) {
@@ -132,14 +132,13 @@ namespace FFTE {
             return N / k;
         }
         size_t k = factor(N);
-        return (k == N && k > RADER_MIN) ? factor(N-1) : k;
+        return (k == N && k > RADER_MIN) ? N-1 : k;
     }
 
     // This is a placeholder for what we need when
     // prime algorithms are introduced
     size_t getLeftover(const size_t N, const size_t k) {
-        if(N % k == 0) return N / k;
-        return (N-1) / k;
+        return (k == N-1) ? 0 : N/k;
     }
 
     // We first check if N is a power of something.
@@ -179,7 +178,7 @@ namespace FFTE {
         *k = factor(N);
         if(*k == N) {
             if(N > RADER_MIN) {
-                *k = factor(N-1);
+                *k = N-1;
                 return fft_type::rader;
             }
             return fft_type::discrete;
@@ -202,12 +201,15 @@ namespace FFTE {
             *sRoot = biFuncNode(type);
         }
         sRoot->sz = N;
-        if(type == fft_type::discrete) {
+        if(type == fft_type::discrete ||
+           type == fft_type::pow2     ||
+           type == fft_type::pow3     ||
+           type == fft_type::pow4) {
             return 1;
         }
         size_t q = getLeftover(N, k);
         size_t l = init_fft_tree(sRoot + 1, k);
-        size_t r = init_fft_tree(sRoot + 1 + l, q);
+        size_t r = (type == fft_type::rader) ? 0 : init_fft_tree(sRoot + 1 + l, q);
         sRoot->left = 1;
         sRoot->right = 1 + l;
         return 1 + l + r;
@@ -216,11 +218,14 @@ namespace FFTE {
     // Get the number of nodes appropriate for a given length signal, N
     size_t getNumNodes(const size_t N) {
         size_t k = numNodesFactorHelper(N);
+        size_t rem = getLeftover(N, k);
         if(k == N) return 1;
-        return 1 + getNumNodes(k) + getNumNodes(getLeftover(N, k));
+        size_t left_nodes = getNumNodes(k);
+        size_t right_nodes = (rem == 0) ? 0 : getNumNodes(rem);
+        return 1 + left_nodes + right_nodes;
     }
 
-    // Print the nodes of a uint tree as they're stored in the length N array root
+    // Print the nodes of a size_t tree as they're stored in the length N array root
     void printRoot(constBiNode<size_t>* root, size_t N) {
         std::cout << "root[" << N << "] = ";
         for(size_t i = 0; i < N; i++) std::cout << root[i].elem << ", ";

@@ -32,7 +32,7 @@ constexpr size_t reverse(size_t v, uint8_t nbits) {
 */
 namespace FFTE {
     // Calculate an omega factor for the FFT. This isn't used by me in practice.
-    Complex omega(uint power, uint N, Direction dir) {
+    Complex omega(size_t power, size_t N, Direction dir) {
         double a = 2.*M_PI*((double) power)/((double) N);
         Complex ret {cos(a), static_cast<int>(dir)*sin(a)};
         return ret;
@@ -77,15 +77,15 @@ namespace FFTE {
         
         // Find the first element 
         Complex tmp = sig_in[0];
-        for(uint n = 1; n < size; n++) {
+        for(size_t n = 1; n < size; n++) {
             tmp = tmp + sig_in[n*s_in];
         }
         sig_out[0] = tmp;
 
         // Find the rest of the elements
-        for(uint k = 1; k < size; k++) {
+        for(size_t k = 1; k < size; k++) {
             tmp = sig_in[0];
-            for(uint n = 1; n < size; n++) {
+            for(size_t n = 1; n < size; n++) {
                 tmp = tmp + w(k, n, size)*sig_in[n*s_in];
             }
             sig_out[k*s_out] = tmp;
@@ -105,18 +105,18 @@ namespace FFTE {
         
         // Calculate first element of output
         Complex tmp = sig_in[0];
-        for(uint n = 1; n < size; n++) {
+        for(size_t n = 1; n < size; n++) {
             tmp = tmp + sig_in[n*s_in];
         }
         sig_out[0] = tmp;
 
         // Initialize rest of output
-        for(uint k = 1; k < size; k++) {
+        for(size_t k = 1; k < size; k++) {
             // Initialize kth output
             tmp = sig_in[0];
 
             // Calculate kth output
-            for(uint n = 1; n < size; n++) {
+            for(size_t n = 1; n < size; n++) {
                 tmp = tmp + wkn*sig_in[n*s_in];
                 wkn = wkn*wk;
             }
@@ -181,7 +181,7 @@ namespace FFTE {
         * Don't need n1 for the second transform as it's just the indexer.
         * Take strides of N2 since z is allocated on the fly in this function for N.
         */
-        for(uint k2 = 0; k2 < N2; k2++) {
+        for(size_t k2 = 0; k2 < N2; k2++) {
             left->fptr(z+k2, y+k2*s_out, N2, N2*s_out, left, w);
         }
 
@@ -209,8 +209,7 @@ namespace FFTE {
         size_t p = sRoot->sz;
         
         // Find the children on the call-graph
-        biFuncNode* forward = sRoot + sRoot->left;
-        biFuncNode* inverse = sRoot + sRoot->right;
+        biFuncNode* subFFT = sRoot + sRoot->left;
 
         // Temporary workspace
         Complex* z = (Complex*) malloc((p-1)*sizeof(Complex));
@@ -231,11 +230,11 @@ namespace FFTE {
         // Convolve the resulting vector with twiddle vector
 
         // First fft the resulting shuffled vector
-        forward->fptr(y, z, s_out, 1, forward, w);
+        subFFT->fptr(y, z, s_out, 1, subFFT, w);
 
         // Perform cyclic convolution
         for(size_t m = 0; m < (p-1); m++) {
-            Complex Cm = w(1, p);
+            Complex Cm = omega(1, p, w.dir);
             ak = a;
             for(size_t k = 1; k < (p-1); k++) {
                 Cm = Cm + omega(p*(k*m+ak) - ak, p*(p-1), w.dir);
@@ -245,7 +244,7 @@ namespace FFTE {
         }
 
         // Bring back into signal domain
-        inverse->fptr(y, z, s_out, 1, inverse, w.inv());
+        subFFT->fptr(y, z, s_out, 1, subFFT, w.inv());
 
         // Shuffle as needed
         ak = 1;
@@ -261,8 +260,8 @@ namespace FFTE {
     void reference_composite_FFT_helper(size_t N, Complex* x, Complex* y, size_t s_in, size_t s_out, Direction dir) {
         
         // Find the factors of N
-        uint N1 = referenceFactor(N);
-        uint N2 = N/N1;
+        size_t N1 = referenceFactor(N);
+        size_t N2 = N/N1;
         
         // Execute a DFT if necessary
         if(N1 == N) {
@@ -275,16 +274,16 @@ namespace FFTE {
 
         // Take the FFT of the "rows" and put output into z.
         reference_composite_FFT_helper(N2, x, z, N1*s_in, 1, dir);
-        for(uint n1 = 1; n1 < N1; n1++) {
+        for(size_t n1 = 1; n1 < N1; n1++) {
             reference_composite_FFT_helper(N2, x+n1*s_in, z+N2*n1, N1*s_in, 1, dir);
-            for(uint k2 = 1; k2 < N2; k2++) {
+            for(size_t k2 = 1; k2 < N2; k2++) {
                 z[n1*N2 + k2] = z[n1*N2 + k2]*omega(n1*k2, N, dir);
             }
         } 
 
         // Take the FFT of the "columns" of z and put it into y
         // Don't need n1 for the second transform as it's just the indexer.
-        for(uint k2 = 0; k2 < N2; k2++) {
+        for(size_t k2 = 0; k2 < N2; k2++) {
             reference_composite_FFT_helper(N1, z+k2, y+k2*s_out, N2, N2*s_out, dir);
         }
 

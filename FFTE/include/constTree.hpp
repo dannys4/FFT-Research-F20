@@ -175,7 +175,7 @@ namespace FFTE {
         return 1 + l + r;
     }
 
-    // Print the nodes of a uint tree as they're stored in the length N array root
+    // Print the nodes of a size_t tree as they're stored in the length N array root
     inline void printRoot(constBiNode<size_t>* root, size_t N) {
         std::cout << "root[" << N << "] = ";
         for(size_t i = 0; i < N; i++) std::cout << root[i].elem << ", ";

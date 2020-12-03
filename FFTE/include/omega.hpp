@@ -83,7 +83,8 @@ namespace FFTE {
             // Return the appropriate twiddle, if possible
             Complex operator()(size_t num, size_t denom) {
                 if(N % denom || num > denom) {
-                    throw "Invalid arguments for this Omega!\n";
+                    std::cerr << "Invalid arguments for this Omega!\n";
+                    exit(-1);
                 }
                 size_t s = N / denom;
                 return (invert) ? 1./data[num*s] : data[num*s];

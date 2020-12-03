@@ -40,7 +40,7 @@ namespace FFTE {
             constBiNode(const T e) {elem = e;}
     };
 
-    // Print the nodes of a uint tree as they're stored in the length N array root
+    // Print the nodes of a size_t tree as they're stored in the length N array root
     void printRoot(constBiNode<size_t>* root, size_t N);
 
     // Print the nodes using a pre-order traversal

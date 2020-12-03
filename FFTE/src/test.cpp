@@ -6,7 +6,7 @@
 
 #define CHECKSUM_COMP 1
 #define ENTRYWISE_COMP 0
-#define FFT_LENGTH 4*9*5*7*11
+#define FFT_LENGTH 61
 
 /*
  * Functions to test veracity of outputs. These check against references
@@ -107,7 +107,7 @@ void check_omega() {
 void check_fft_tree() {
     std::cout << "Checking the output of call graph node sizes against expected output...\n";
     size_t N = 15120;
-    uint ell = getNumNodes(N);
+    size_t ell = getNumNodes(N);
     biFuncNode root[ell];
     init_fft_tree(root, N);
     std::cout << "\t\t";
@@ -187,9 +187,9 @@ void time_complex_mult() {
     std::vector<Complex> mycomp1 {};
     std::vector<Complex> mycomp2 {};
     auto rand = std::bind(std::uniform_real_distribution<>{0.0,10.0}, std::default_random_engine{});
-    uint len = 5e6;
+    size_t len = 5e6;
     double a,b;
-    for(uint i = 0; i < len; i++) {
+    for(size_t i = 0; i < len; i++) {
         a = rand(); b = rand();
         stdcomp1.push_back(std::complex<double>(a, b));
         mycomp1.push_back(Complex(a, b));
@@ -199,7 +199,7 @@ void time_complex_mult() {
     }
 
     auto start = clock::now();
-    for(uint i = 0; i < len; i++) {
+    for(size_t i = 0; i < len; i++) {
         auto m = stdcomp1[i] * stdcomp2[i];
         if((void*) (&m) == (void*) 0x123456) std::cout << "aaaa\n";
     }
@@ -208,7 +208,7 @@ void time_complex_mult() {
     std::cout << "Standard mult took " << stdmult << "ns\n";
     
     start = clock::now();
-    for(uint i = 0; i < len; i++) {
+    for(size_t i = 0; i < len; i++) {
         auto m = mycomp1[i] * mycomp2[i];
         if((void*) (&m) == (void*) 0x123456) std::cout << "aaaa\n";
     }
@@ -226,7 +226,7 @@ void time_const_tree() {
     using std::chrono::nanoseconds;
     typedef std::chrono::high_resolution_clock clock;
 
-    uint N = 1e5;
+    size_t N = 1e5;
     std::cout << "Testing compile time performance...\n";
     auto start = clock::now();
     for(size_t i = 0; i < N; i++) {
@@ -306,12 +306,12 @@ void time_omega() {
     
     auto rand = std::bind(std::uniform_int_distribution<>{1,Njmax}, std::default_random_engine{});
 
-    uint Ntrials = 100;
+    size_t Ntrials = 100;
     
     std::vector<size_t> Nvec {};
     size_t N = 1;
-    for(uint i = 0; i < N_factors; i++) {
-        uint tmp = rand();
+    for(size_t i = 0; i < N_factors; i++) {
+        size_t tmp = rand();
         N *= tmp;
         Nvec.push_back(tmp);
     }
@@ -319,11 +319,11 @@ void time_omega() {
     auto fcn_time = omega_fcn_time(Nvec);
     auto class_time = omega_class_time(Nvec, w);
 
-    for(uint i = 0; i < Ntrials; i++) {
+    for(size_t i = 0; i < Ntrials; i++) {
         Nvec.clear();
         N = 1;
-        for(uint i = 0; i < N_factors; i++) {
-            uint tmp = rand();
+        for(size_t i = 0; i < N_factors; i++) {
+            size_t tmp = rand();
             N *= tmp;
             Nvec.push_back(tmp);
         }
