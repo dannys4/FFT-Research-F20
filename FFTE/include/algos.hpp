@@ -31,7 +31,7 @@ namespace FFTE {
 
     enum fft_type {pow2, pow3, pow4, composite, discrete, rader};
 
-#if 0
+#if MODERN_CPP
     // Functor class for performing these transforms
     class Fourier_Transform {
         private:

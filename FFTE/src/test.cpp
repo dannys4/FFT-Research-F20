@@ -4,9 +4,9 @@
  * This file is part of FFTE (Fast Fourier Transform Engine)
  */
 
-#define CHECKSUM_COMP 0
-#define ENTRYWISE_COMP 1
-#define FFT_LENGTH 7
+#define CHECKSUM_COMP 1
+#define ENTRYWISE_COMP 0
+#define FFT_LENGTH 5*27*64+1
 
 /*
  * Functions to test veracity of outputs. These check against references
@@ -174,6 +174,7 @@ void time_fft() {
 
     std::cout << "Done timing the FFTs!\n\n";
 }
+
 
 // Compares my complex multiplication to std::complex multiplication
 void time_complex_mult() {

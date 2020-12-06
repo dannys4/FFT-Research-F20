@@ -14,7 +14,7 @@
 #define FACTORS_LEN 200
 
 // This is the minimum signal size for us to use Rader's algorithm
-#define RADER_MIN 5
+#define RADER_MIN 1000000
 
 namespace FFTE {
     /* Initialize an fft tree given an appropriately sized empty array of 

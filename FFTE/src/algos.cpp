@@ -203,7 +203,7 @@ namespace FFTE {
         return f;
     }
 
-    
+    // Implementation for Rader's Algorithm
     void rader_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Omega& w, size_t a, size_t ainv) {
         // Size of the problem
         size_t p = sRoot->sz;
@@ -230,8 +230,8 @@ namespace FFTE {
         // Convolve the resulting vector with twiddle vector
 
         // First fft the resulting shuffled vector
-        subFFT->fptr(y, z, s_out, 1, subFFT, w);
-        // DFT_helper(subFFT->sz, y, z, s_out, 1, w.direction());
+        Omega new_w (w.direction());
+        subFFT->fptr(y, z, s_out, 1, subFFT, new_w);
 
         // Perform cyclic convolution
         for(size_t m = 0; m < (p-1); m++) {
@@ -245,9 +245,8 @@ namespace FFTE {
         }
 
         // Bring back into signal domain
-        Omega winv (w.inv().direction());
+        Omega winv (w.inv());
         subFFT->fptr(y, z, s_out, 1, subFFT, winv);
-        // DFT_helper(subFFT->sz, y, z, s_out, 1, w.inv().direction());
 
         // Shuffle as needed
         ak = 1;
