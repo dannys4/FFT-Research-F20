@@ -7,5 +7,5 @@
 
 // Main function. Used for calling different parts of the testing code
 int main() {
-    time_fft();
+    test_FFT_into_csv("temp.csv", 10000);
 }

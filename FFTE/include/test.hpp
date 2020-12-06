@@ -10,6 +10,7 @@
 #include <complex>
 #include "omega.hpp"
 #include <cassert>
+#include <fstream>
 
 #if MODERN_CPP
 #include "constTree.hpp"
@@ -27,5 +28,5 @@ void time_fft();
 void time_complex_mult();
 void time_const_tree();
 void time_omega();
-
+void test_FFT_into_csv(std::string filename, int maxSize);
 #endif

@@ -175,6 +175,57 @@ void time_fft() {
     std::cout << "Done timing the FFTs!\n\n";
 }
 
+void test_FFT_into_csv(std::string filename, int maxsize) {
+    using std::chrono::duration_cast;
+    using std::chrono::nanoseconds;
+    typedef std::chrono::high_resolution_clock clock;
+    auto rand = std::bind(std::uniform_real_distribution<>{0.0,10.0}, std::default_random_engine{});
+
+    std::cout << "Timing the current FFT tree configuration against reference...\n";
+    std::cout << "Outputting results into " << filename << "\n";
+    std::ofstream myfile;
+    Complex *x = (Complex*) malloc(maxsize*sizeof(Complex));
+    Complex *y_new = (Complex*) malloc(maxsize*sizeof(Complex));
+    Complex *y_ctc = (Complex*) malloc(maxsize*sizeof(Complex));
+    Complex *y_dft = (Complex*) malloc(maxsize*sizeof(Complex));
+    for(int i = 0; i < maxsize; i++) x[i] = Complex(rand(),rand());
+
+    myfile.open(filename);
+    myfile << "N,FFTE Setup Time(s),FFTE Time (s),Composite FFT Time (s),DFT Time (s),L2 Error\n";
+    for(int N = 10; N < maxsize; N++) {
+        auto start = clock::now();
+        int ell = getNumNodes(N);
+        biFuncNode root[ell];
+        init_fft_tree(root, N);
+        Omega w(Direction::forward);
+        auto end = clock::now();
+        auto setupTime = duration_cast<nanoseconds>(end-start).count();
+
+        start = clock::now();
+        root->fptr(x, y_new, 1, 1, root, w);
+        end = clock::now();
+        auto myTime = duration_cast<nanoseconds>(end-start).count();
+
+        start = clock::now();
+        reference_composite_FFT(N, x, y_ctc, Direction::forward);
+        end = clock::now();
+        auto compositeTime = duration_cast<nanoseconds>(end-start).count();
+
+        start = clock::now();
+        reference_DFT(N, x, y_dft, Direction::forward);
+        end = clock::now();
+        auto dftTime = duration_cast<nanoseconds>(end-start).count();
+
+        double err = 0.;
+        for(int j = 0; j < N; j++) {
+            err += (y_new[j]-y_dft[j]).modulus();
+        }
+
+        myfile << N << "," << setupTime << "," << myTime << "," << compositeTime << "," << dftTime << "," << err << "\n";
+    }
+    myfile.close();
+    std::cout << "Finished!\n";
+}
 
 // Compares my complex multiplication to std::complex multiplication
 void time_complex_mult() {

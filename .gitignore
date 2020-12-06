@@ -7,6 +7,7 @@
 # Exclude any files looking like this
 /**/.vscode
 /**/*.o
+/**/*.csv
 /**/run
 /**/callgrind.out.*
 /**/.devcontainer
