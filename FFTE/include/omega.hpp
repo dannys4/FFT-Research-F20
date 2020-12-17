@@ -7,8 +7,47 @@
 
 #include "complex.hpp"
 #include <vector>
+#define CACHE_OMEGA 0
 
 namespace FFTE {
+#if CACHE_OMEGA
+    // Omega caching abilities
+    class OmegaCache {
+        private:
+            size_t num;
+            size_t denom;
+            Complex inc_data;
+            Complex curr_data;
+        public:
+            explicit OmegaCache() {
+                init(0, Complex());
+            }
+
+            explicit OmegaCache(size_t denominator, Complex increment) {
+                init(denominator, increment);
+            }
+
+            bool operator()(size_t numerator, size_t denominator) {
+                if(denominator == denom && numerator == num+1) {
+                    curr_data *= inc_data;
+                    num++;
+                    return true;
+                }
+                return false;
+            }
+
+            void init(size_t denominator, Complex increment) {
+                num = 1;
+                denom = denominator;
+                inc_data = increment;
+                curr_data = increment;
+            }
+
+            Complex getData() {
+                return curr_data;
+            }
+    };
+#endif
     // An enum for knowing whether the transform is forward or inverse
     enum class Direction {forward = -1, inverse = 1};
 
@@ -18,12 +57,24 @@ namespace FFTE {
         using ComplexArr = std::vector<Complex>;
 
         private:
+
             size_t N; // Size of array
             ComplexArr data; // Where data is held
+#if CACHE_OMEGA
+            OmegaCache cache; // To hold the cache
+#endif
+
+            int log2(size_t N) {
+                int ret = 0;
+                while((N>>ret) != 0) ret++;
+                return ret;
+            }
 
             // Initialize N and data (assumes dir is predetermined)
             void init(size_t length) {
                 N = length;
+
+                int arr_len = 2*log2(length);
 
                 // Base the initialization on an exponential factor with
                 // minimal increment
@@ -32,14 +83,26 @@ namespace FFTE {
 
                 // Allocate and initialize data
                 Complex w = w0;
-                data = ComplexArr(N);
+                data = ComplexArr(arr_len);
                 data[0] = Complex(1., 0.);
-                for(size_t k = 1; k < N; k++) {
+                for(int k = 1; k < arr_len; k++) {
                     data[k] = w;
-                    w = w*w0;
+                    w = w*w;
                 }
             }
 
+            Complex getElement(size_t s) {
+                int k = 1;
+                Complex ret = data[0];
+                while(s != 0) {
+                    if((s & 0x1)) {
+                        ret *= data[k];
+                    }
+                    k++;
+                    s >>= 1;
+                }
+                return ret;
+            }
         public:
             // Public facing member that ultimately determines whether
             // the FFT is forward or inverse
@@ -73,25 +136,26 @@ namespace FFTE {
 
             // Return the appropriate twiddle, if possible
             Complex operator()(size_t num, size_t denom) {
-                if(N % denom || num > denom) {
+                if(N % denom || num > denom*denom) {
                     std::cerr << "Invalid arguments for this Omega!\n";
                     exit(-1);
                 }
-                size_t s = N / denom;
-                return data[num*s];
+#if CACHE_OMEGA
+                if(cache(num, denom)) {
+                    return cache.getData();
+                }
+                else {
+                    cache.init(denom, getElement(N/denom));
+                }
+#endif 
+                size_t s = num * N / denom;
+                
+                return getElement(s);
             }
 
             // Constructs appropriate exponential factor if number > denom
             Complex operator()(size_t num1, size_t num2, size_t denom) {
-                if(num1*num2 < denom) return this->operator()(num1*num2, denom);
-                
-                size_t min = std::min<size_t>(num1, num2);
-                size_t max = std::max<size_t>(num1, num2);
-                
-                Complex w0 = this->operator()(max, denom);
-                Complex w = w0;
-                for(size_t i = 1; i < min; i++) w = w0*w;
-                return w;
+                return this->operator()(num1*num2, denom);
             }
 
             // "inverts" the data

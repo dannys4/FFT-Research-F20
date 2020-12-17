@@ -42,16 +42,19 @@ namespace FFTE {
                 return Complex(ret);
             }
 
+            // Divides a complex number by a double
             Complex operator/(const double y) {
                 __m128d ret = _mm_div_pd(var, _mm_set_pd1(y));
                 return Complex(ret);
             }
 
+            // Divides a complex number by a double and resets this value
             Complex operator/=(const double y) {
                 var = _mm_div_pd(var, _mm_set_pd1(y));
                 return *this;
             }
 
+            // Return the complex conjugate of this double
             Complex conjugate() {
                 __m128d conj = _mm_addsub_pd(_mm_setzero_pd(), var);
                 Complex c = Complex(conj);
@@ -70,6 +73,12 @@ namespace FFTE {
                 __m128d mult = _mm_fmaddsub_pd(var, _mm_permute_pd(y.var, 0), _mm_mul_pd(_mm_permute_pd(var, 1), _mm_permute_pd(y.var, 3)));
                 Complex ret = Complex(mult);
                 return ret;
+            }
+
+            // Performs multiplication between this and y then resets this
+            Complex operator*=(const Complex& y) {
+                var = _mm_fmaddsub_pd(var, _mm_permute_pd(y.var, 0), _mm_mul_pd(_mm_permute_pd(var, 1), _mm_permute_pd(y.var, 3)));
+                return *this;
             }
 
             // Performs multiplication between a double and Complex number
@@ -105,10 +114,12 @@ namespace FFTE {
         return os;
     }
 
+    // Define multiplication between double and Complex number
     inline Complex operator*(double d, Complex c) {
         return c*d;
     }
 
+    // Define division of a double by a complex number
     inline Complex operator/(double d, Complex c) {
         Complex ret = d * c.conjugate() / c.modulus();
         return ret;

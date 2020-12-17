@@ -6,7 +6,7 @@
 
 #define CHECKSUM_COMP 1
 #define ENTRYWISE_COMP 0
-#define FFT_LENGTH 5*27*64+1
+#define FFT_LENGTH 5*27*64*13
 
 /*
  * Functions to test veracity of outputs. These check against references
@@ -72,19 +72,19 @@ void check_omega() {
     Omega w (N, Direction::forward);
     double sum = 0.;
     for(size_t i = 0; i < N; i++) {
-        for(size_t j = 0; j < N; j++) sum += (w(i, j, N)-omega(i*j, N, Direction::forward)).modulus();
+        for(size_t j = 0; j < N; j++) sum += (w(i*j, N)-omega(i*j, N, Direction::forward)).modulus();
     }
     std::cout << "L2 Error in initialization with N = " << N << " is " << sum << "\n";
     
     sum = 0.;
     for(size_t i = 0; i < N1; i++) {
-        for(size_t j = 0; j < N1; j++) sum += (w(i, j, N1)-omega(i*j, N1, Direction::forward)).modulus();
+        for(size_t j = 0; j < N1; j++) sum += (w(i*j, N1)-omega(i*j, N1, Direction::forward)).modulus();
     }
     std::cout << "L2 Error in Checking against N1 = " << N1 << " is " << sum << "\n";
     
     sum = 0.;
     for(size_t i = 0; i < N2; i++) {
-        for(size_t j = 0; j < N2; j++) sum += (w(i, j, N2)-omega(i*j, N2, Direction::forward)).modulus();
+        for(size_t j = 0; j < N2; j++) sum += (w(i*j, N2)-omega(i*j, N2, Direction::forward)).modulus();
     }
     std::cout << "L2 Error in Checking against N2 = " << N2 << " is " << sum << "\n";
     
@@ -153,7 +153,7 @@ void time_fft() {
         new_fft += duration_cast<nanoseconds>(end-start).count();
         if(in == (Complex*) 0x12345) std::cout << "this shouldn't print\n";
     }
-    
+#if 1
     start = clock::now();
     reference_composite_FFT(n, in, out_new, Direction::forward);
     end = clock::now();
@@ -169,7 +169,7 @@ void time_fft() {
                  (new_fft*1.e-9)/((double) Ntrials) <<
                  "s, where the reference takes " <<
                  (ref_fft*1e-9)/((double) Ntrials) << "s\n";
-    
+#endif    
     free(in); free(out_ref); free(out_new);
 
     std::cout << "Done timing the FFTs!\n\n";

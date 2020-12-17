@@ -9,6 +9,7 @@
 #include "omega.hpp"
 #include <iostream>
 
+// Check if we can use modern C++ features
 #define MODERN_CPP (defined(__cplusplus) && ((__cplusplus / 100) >= 2014))
 
 namespace FFTE {
