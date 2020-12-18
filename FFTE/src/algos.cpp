@@ -6,7 +6,7 @@
 
 // The following two parts here are sourced from the following link:
 // https://graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious
-static constexpr uint8_t BitReverseTable256[256] = 
+static constexpr unsigned char BitReverseTable256[256] = 
 {
 #   define R2(n)    n,     n + 2*64,     n + 1*64,     n + 3*64
 #   define R4(n) R2(n), R2(n + 2*16), R2(n + 1*16), R2(n + 3*16)
@@ -15,10 +15,10 @@ static constexpr uint8_t BitReverseTable256[256] =
 };
 
 /*
-constexpr size_t reverse(size_t v, uint8_t nbits) {
+constexpr size_t reverse(size_t v, unsigned char nbits) {
     size_t c = 0;
-    uint8_t * p = (uint8_t *) &v;
-    uint8_t * q = (uint8_t *) &c;
+    unsigned char * p = (unsigned char *) &v;
+    unsigned char * q = (unsigned char *) &c;
     q[7] = BitReverseTable256[p[0]]; 
     q[6] = BitReverseTable256[p[1]]; 
     q[5] = BitReverseTable256[p[2]]; 

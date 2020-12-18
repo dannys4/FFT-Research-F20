@@ -293,7 +293,7 @@ void time_const_tree() {
     std::cout << "Known at compile time took " << duration_cast<nanoseconds>(end-start).count() << "ns\n";
     std::cout << "Initializing random ints...\n";
     auto rand = std::bind(std::uniform_int_distribution<>{2, 4}, std::default_random_engine{});
-    std::vector<uint> v {};
+    std::vector<unsigned long long> v {};
     for(size_t i = 0; i < N; i++) {
         v.push_back(rand());
     }

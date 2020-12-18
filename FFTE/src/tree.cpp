@@ -99,7 +99,7 @@ namespace FFTE {
     bool power_of(const size_t n, const size_t pow) {
         size_t k = n;
         if(pow == 2) {
-            uint8_t sum = 0x1 & n;
+            unsigned char sum = 0x1 & n;
             for(;k;k>>=1) sum += 0x1&k;
             return sum == 1;
         }
