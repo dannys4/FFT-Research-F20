@@ -28,24 +28,24 @@ namespace FFTE {
             }
 
             // Creates a complex number from a pack
-            Complex(__m128d& v) { var = v; }
+            Complex(__m128d& v) : var(v) {}
+
+            // Creates a complex number from a pack
+            Complex(__m128d v) : var(v) {}
 
             // Calculates the sum of two complex numbers
             Complex operator+(const Complex& y) {
-                __m128d ret = _mm_add_pd(var, y.var);
-                return Complex(ret);
+                return Complex(_mm_add_pd(var, y.var));
             }
 
             // Calculates the difference of two complex numbers
             Complex operator-(const Complex& y) {
-                __m128d ret = _mm_sub_pd(var, y.var);
-                return Complex(ret);
+                return Complex(_mm_sub_pd(var, y.var));
             }
 
             // Divides a complex number by a double
             Complex operator/(const double y) {
-                __m128d ret = _mm_div_pd(var, _mm_set_pd1(y));
-                return Complex(ret);
+                return Complex(_mm_div_pd(var, _mm_set_pd1(y)));
             }
 
             // Divides a complex number by a double and resets this value
@@ -56,9 +56,7 @@ namespace FFTE {
 
             // Return the complex conjugate of this double
             Complex conjugate() {
-                __m128d conj = _mm_addsub_pd(_mm_setzero_pd(), var);
-                Complex c = Complex(conj);
-                return c;
+                return Complex(_mm_addsub_pd(_mm_setzero_pd(), var));
             }
 
             /* 
@@ -70,9 +68,7 @@ namespace FFTE {
             * auto mult = _mm_fmaddsub_pd(this->var, cc, dba);
             */
             Complex operator*(const Complex& y) {
-                __m128d mult = _mm_fmaddsub_pd(var, _mm_permute_pd(y.var, 0), _mm_mul_pd(_mm_permute_pd(var, 1), _mm_permute_pd(y.var, 3)));
-                Complex ret = Complex(mult);
-                return ret;
+                return Complex(_mm_fmaddsub_pd(var, _mm_permute_pd(y.var, 0), _mm_mul_pd(_mm_permute_pd(var, 1), _mm_permute_pd(y.var, 3))));
             }
 
             // Performs multiplication between this and y then resets this
@@ -83,9 +79,7 @@ namespace FFTE {
 
             // Performs multiplication between a double and Complex number
             Complex operator*(double y) {
-                __m128d mult = _mm_mul_pd(_mm_set_pd1(y), var);
-                Complex c =  Complex(mult);
-                return c;
+                return Complex(_mm_mul_pd(_mm_set_pd1(y), var));
             }
 
             // Returns the var member of this class
@@ -106,8 +100,8 @@ namespace FFTE {
 
     // Determines how my complex number should be printed to an ostream
     inline std::ostream& operator<<(std::ostream& os, const Complex& dt){
-        double* tmp = (double*) aligned_alloc(16, 2*sizeof(double));
-        _mm_store_pd(tmp, dt.getVar());
+        double tmp[2];
+        _mm_storeu_pd(tmp, dt.getVar());
         if(tmp[1] > 0) os << tmp[0] << " + " << tmp[1] << "i";
         else os << tmp[0] << " - " << -tmp[1] << "i";
         free(tmp);

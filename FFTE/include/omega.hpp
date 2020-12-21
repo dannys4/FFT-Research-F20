@@ -85,9 +85,10 @@ namespace FFTE {
                 Complex w = w0;
                 data = ComplexArr(arr_len);
                 data[0] = Complex(1., 0.);
-                for(int k = 1; k < arr_len; k++) {
-                    data[k] = w;
-                    w = w*w;
+
+                for(int k = 1; k < N*N; k*=2) {
+                    
+                    data[k] = Complex(cos(2*M_PI*((double) k)/N), static_cast<int>(dir) * sin(2*M_PI*((double) k)/N));
                 }
             }
 
@@ -103,6 +104,7 @@ namespace FFTE {
                 }
                 return ret;
             }
+
         public:
             // Public facing member that ultimately determines whether
             // the FFT is forward or inverse
