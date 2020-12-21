@@ -8,6 +8,9 @@ OBJDIR=$(SRCDIR)/obj
 
 LIBS=
 
+# This will only work on a Unix-like environment
+dir_guard=@mkdir -p $(@D)
+
 _DEPS=$(wildcard $(INCDIR)/*.hpp) 
 DEPS=$(patsubst $(INCDIR)/%,%,$(_DEPS))
 
@@ -15,6 +18,7 @@ _OBJ=$(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(wildcard $(SRCDIR)/*.cpp))
 OBJ=$(patsubst %,%,$(_OBJ))
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(INCDIR)/%.hpp
+	$(dir_guard)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp

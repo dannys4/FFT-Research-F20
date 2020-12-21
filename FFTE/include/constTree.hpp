@@ -1,6 +1,6 @@
 /* Header file for C++14 and up */
-#ifndef FFTE_CONST_TREE_HPP
-#define FFTE_CONST_TREE_HPP
+#ifndef FFTE_TREE_HPP
+#define FFTE_TREE_HPP
 /**
  * Code Author: Danny Sharp
  * This file is part of FFTE (Fast Fourier Transform Engine)
@@ -205,4 +205,4 @@ namespace FFTE {
     }
 }
 
-#endif // END FFTE_CONST_TREE_HPP
+#endif // END FFTE_TREE_HPP
