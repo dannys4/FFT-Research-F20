@@ -1,6 +1,6 @@
 /* Header file for C++11 and under */
-#ifndef TREE_HPP
-#define TREE_HPP
+#ifndef FFTE_TREE_HPP
+#define FFTE_TREE_HPP
 /**
  * Code Author: Danny Sharp
  * This file is part of FFTE (Fast Fourier Transform Engine)
@@ -11,10 +11,10 @@
 
 // We use this because it's a variable used in the factor function, so by defining it beforehand,
 // going out of bounds on memory is much harder
-#define FACTORS_LEN 200
+#define FFTE_FACTORS_LEN 200
 
 // This is the minimum signal size for us to use Rader's algorithm
-#define RADER_MIN 1000000
+#define FFTE_RADER_MIN 1000000
 
 namespace FFTE {
     /* Initialize an fft tree given an appropriately sized empty array of 

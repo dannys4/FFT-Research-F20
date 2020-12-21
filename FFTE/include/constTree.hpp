@@ -1,6 +1,6 @@
 /* Header file for C++14 and up */
-#ifndef TREE_HPP
-#define TREE_HPP
+#ifndef FFTE_CONST_TREE_HPP
+#define FFTE_CONST_TREE_HPP
 /**
  * Code Author: Danny Sharp
  * This file is part of FFTE (Fast Fourier Transform Engine)
@@ -8,7 +8,7 @@
 
 // We use this because it's a variable used in the factor function, so by defining it beforehand,
 // going out of bounds on memory is much harder
-#define FACTORS_LEN 15 
+#define FFTE_FACTORS_LEN 15 
 
 #include <iostream>
 #include "algos.hpp"
@@ -17,13 +17,13 @@ namespace FFTE {
     /* Statically allocated array of factors that are known at compile-time. These
     * are not necessarily prime, just ordered in the way that we prioritize.
     */
-    static constexpr size_t factors[FACTORS_LEN] {4, 2, 3, 5, 7, 11, 13, 16, 17, 19, 23, 29, 31, 37, 41};
+    static constexpr size_t factors[FFTE_FACTORS_LEN] {4, 2, 3, 5, 7, 11, 13, 16, 17, 19, 23, 29, 31, 37, 41};
 
     // Function to find the smallest usable factor of f at compile-time.
     constexpr size_t factor(const size_t f) {
         size_t k = 0;
         // Prioritize factors in the factors array
-        for(; k < FACTORS_LEN; k++) {
+        for(; k < FFTE_FACTORS_LEN; k++) {
             if( f % factors[k] == 0) return factors[k];
         }
 
@@ -205,4 +205,4 @@ namespace FFTE {
     }
 }
 
-#endif
+#endif // END FFTE_CONST_TREE_HPP

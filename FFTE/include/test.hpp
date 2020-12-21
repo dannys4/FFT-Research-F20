@@ -12,7 +12,7 @@
 #include <cassert>
 #include <fstream>
 
-#if MODERN_CPP
+#if FFTE_MODERN_CPP
 #include "constTree.hpp"
 #else
 #include "tree.hpp"

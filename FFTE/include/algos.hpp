@@ -1,5 +1,5 @@
-#ifndef ALGOS_HPP
-#define ALGOS_HPP
+#ifndef FFTE_ALGOS_HPP
+#define FFTE_ALGOS_HPP
 /**
  * Code Author: Danny Sharp
  * This file is part of FFTE (Fast Fourier Transform Engine)
@@ -10,7 +10,7 @@
 #include <iostream>
 
 // Check if we can use modern C++ features
-#define MODERN_CPP (defined(__cplusplus) && ((__cplusplus / 100) >= 2014))
+#define FFTE_MODERN_CPP (defined(__cplusplus) && ((__cplusplus / 100) >= 2014))
 
 namespace FFTE {
     // Need forward declaration for the using directive
@@ -32,7 +32,7 @@ namespace FFTE {
 
     enum fft_type {pow2, pow3, pow4, composite, discrete, rader};
 
-#if MODERN_CPP
+#if FFTE_MODERN_CPP
     // Functor class for performing these transforms
     class Fourier_Transform {
         private:
@@ -47,7 +47,7 @@ namespace FFTE {
                     case fft_type::pow4: pow2_FFT(x, y, s_in, s_out, sRoot, w); break;
                     case fft_type::composite: composite_FFT(x, y, s_in, s_out, sRoot, w); break;
                     case fft_type::discrete: DFT(x, y, s_in, s_out, sRoot, w); break;
-                    default: std::cerr << "NO\n"; exit(-1);
+                    default: std::cerr << "This is not supported or implemented yet\n"; exit(-1);
                 }
             }
     };
@@ -107,6 +107,6 @@ namespace FFTE {
             biFuncNode(size_t a, size_t ainv): fptr(a,ainv) {};
             biFuncNode operator=(const biFuncNode o) {fptr = o.fptr; return *this;}
     };
-#endif
+#endif // END DECISIONS BASED ON WHETHER C++14+
 }
-#endif
+#endif // END FFTE_ALGOS_HPP

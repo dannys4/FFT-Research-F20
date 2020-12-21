@@ -1,5 +1,5 @@
-#ifndef OMEGA_HPP
-#define OMEGA_HPP
+#ifndef FFTE_OMEGA_HPP
+#define FFTE_OMEGA_HPP
 /**
  * Code Author: Danny Sharp
  * This file is part of FFTE (Fast Fourier Transform Engine)
@@ -7,10 +7,15 @@
 
 #include "complex.hpp"
 #include <vector>
-#define CACHE_OMEGA 0
+
+/* The ability to cache exponential factors.
+ * This isn't very well supported and is turned off,
+ * as it actively hampers performance
+ */
+#define FFTE_CACHE_OMEGA 0
 
 namespace FFTE {
-#if CACHE_OMEGA
+#if FFTE_CACHE_OMEGA
     // Omega caching abilities
     class OmegaCache {
         private:
@@ -60,10 +65,11 @@ namespace FFTE {
 
             size_t N; // Size of array
             ComplexArr data; // Where data is held
+
 #if CACHE_OMEGA
             OmegaCache cache; // To hold the cache
-#endif
-
+#endif // END CACHE CHECKING
+            // Log of N base 2
             int log2(size_t N) {
                 int ret = 0;
                 while((N>>ret) != 0) ret++;
@@ -82,16 +88,19 @@ namespace FFTE {
                 Complex w0 {cos(a), static_cast<int>(dir) * sin(a)};
 
                 // Allocate and initialize data
+                // TODO: fix this accuracy stuff
                 Complex w = w0;
                 data = ComplexArr(arr_len);
                 data[0] = Complex(1., 0.);
 
-                for(int k = 1; k < N*N; k*=2) {
-                    
+                for(size_t k = 1; k < N*N; k*=2) {
                     data[k] = Complex(cos(2*M_PI*((double) k)/N), static_cast<int>(dir) * sin(2*M_PI*((double) k)/N));
                 }
             }
 
+            /* Private function to get the appropriate exponential factor
+             * for the given twiddle factor
+             */
             Complex getElement(size_t s) {
                 int k = 1;
                 Complex ret = data[0];
@@ -110,6 +119,7 @@ namespace FFTE {
             // the FFT is forward or inverse
             const Direction dir;
 
+            // Don't create a default constructor.
             Omega() = delete;
 
             // Basic constructor
@@ -142,14 +152,14 @@ namespace FFTE {
                     std::cerr << "Invalid arguments for this Omega!\n";
                     exit(-1);
                 }
-#if CACHE_OMEGA
+#if FFTE_CACHE_OMEGA
                 if(cache(num, denom)) {
                     return cache.getData();
                 }
                 else {
                     cache.init(denom, getElement(N/denom));
                 }
-#endif 
+#endif // END CACHE CHECKING
                 size_t s = num * N / denom;
                 
                 return getElement(s);
@@ -171,4 +181,4 @@ namespace FFTE {
             }
     };
 }
-#endif // OMEGA_HPP
+#endif // FFTE_OMEGA_HPP

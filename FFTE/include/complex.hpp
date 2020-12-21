@@ -1,5 +1,5 @@
-#ifndef COMPLEX_HPP
-#define COMPLEX_HPP
+#ifndef FFTE_COMPLEX_HPP
+#define FFTE_COMPLEX_HPP
 /**
  * Code Author: Danny Sharp
  * This file is part of FFTE (Fast Fourier Transform Engine)
@@ -104,7 +104,6 @@ namespace FFTE {
         _mm_storeu_pd(tmp, dt.getVar());
         if(tmp[1] > 0) os << tmp[0] << " + " << tmp[1] << "i";
         else os << tmp[0] << " - " << -tmp[1] << "i";
-        free(tmp);
         return os;
     }
 
@@ -119,4 +118,4 @@ namespace FFTE {
         return ret;
     }
 }
-#endif
+#endif // END FFTE_COMPLEX_HPP
