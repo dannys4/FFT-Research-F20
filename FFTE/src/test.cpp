@@ -6,7 +6,7 @@
 
 #define CHECKSUM_COMP 1
 #define ENTRYWISE_COMP 0
-#define FFT_LENGTH 5*27*64*13
+#define FFT_LENGTH 19*27*5*7*11
 
 /*
  * Functions to test veracity of outputs. These check against references

@@ -54,14 +54,19 @@ namespace FFTE {
         pow2_FFT_helper(m, x, y, s_in*2, s_out, w);
         pow2_FFT_helper(m, x+s_in, y+s_out*m, s_in*2, s_out, w);
 
+        // Twiddle Factor
+        double inc = 2.*M_PI/N;
+        Complex w1 (cos(inc), static_cast<int>(w.dir)*sin(inc));
+        Complex wj (1., 0.);
+
         // Conquer larger problem accordingly
         for(int j = 0; j < m; j++) {
-            Complex wj = w(j, N);
             int j_stride = j*s_out;
             int jm_stride = (j+m)*s_out;
             Complex y_j = y[j_stride];
             y[j_stride] = y_j + wj*y[jm_stride];
             y[jm_stride] = y_j - wj*y[jm_stride];
+            wj *= w1;
         }
     }
 
@@ -130,10 +135,7 @@ namespace FFTE {
 
     // External-facing function to properly call the internal DFT function
     void DFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sLeaf, Omega& w) {
-        if(!w()) {
-            DFT_helper(sLeaf->sz, x, y, s_in, s_out, w.dir);
-        }
-        else DFT_helper(sLeaf->sz, x, y, s_in, s_out, w);
+        DFT_helper(sLeaf->sz, x, y, s_in, s_out, w.dir);
     }
 
     // External-facing reference DFT for testing purposes
@@ -170,11 +172,18 @@ namespace FFTE {
         Complex* z = (Complex*) malloc(N*sizeof(Complex));
 
         // Find the FFT of the "rows" of the input signal and twiddle them accordingly
+        double inc = 2*M_PI/((double) N);
+        Complex w1 (cos(inc), static_cast<int>(w.dir)*sin(inc));
+        Complex wn1 = Complex(1., 0.);
         for(size_t n1 = 0; n1 < N1; n1++) {
+            Complex wk2 = wn1;
             right->fptr(x+n1*s_in, z+N2*n1, N1*s_in, 1, right, w);
             for(size_t k2 = 1; (k2 < N2) && (n1 > 0); k2++) {
-                z[n1*N2 + k2] = z[n1*N2 + k2]*w(n1, k2, N);
+                // std::cout << "n1 = " << n1 << ", k2 = " << k2 << ", N = " << N << ", wk2 = " << wk2 << ", w(n1,k2,N) = " << w(n1,k2,N) << ", omega(n1*k2, N) = " << omega(n1*k2, N, w.dir) << "\n";
+                z[n1*N2 + k2] = z[n1*N2 + k2]*wk2;
+                wk2 *= wn1;
             }
+            wn1 *= w1;
         }
 
         /* Take the FFT of the "columns" of the output from the above "row" FFTs. 
@@ -318,6 +327,10 @@ namespace FFTE {
         pow3_FFT_helper(Nprime, x+2*s_in, y+2*Nprime*s_out, s_in*3, s_out, w, plus120, minus120);
 
         // Combine the sub-problem solutions
+        Complex wk1 (1., 0.); Complex wk2 (1., 0.);
+        double inc = 2.*M_PI/N;
+        Complex w1 (cos(  inc), static_cast<int>(w.dir)*sin(  inc));
+        Complex w2 (cos(2*inc), static_cast<int>(w.dir)*sin(2*inc));
         for(size_t k = 0; k < Nprime; k++) {
             // Index calculation
             auto k1 = k * s_out;
@@ -329,13 +342,13 @@ namespace FFTE {
             Complex tmpk_p_1 = y[k2];
             Complex tmpk_p_2 = y[k3];
 
-            // Twiddle factors
-            Complex wk1 = w(k, N); Complex wk2 = w(2*k, N);
-
             // Reassigning the output
             y[k1] = tmpk +             wk1 * tmpk_p_1 +            wk2 * tmpk_p_2;
             y[k2] = tmpk + plus120  *  wk1 * tmpk_p_1 + minus120 * wk2 * tmpk_p_2;
             y[k3] = tmpk + minus120 *  wk1 * tmpk_p_1 + plus120  * wk2 * tmpk_p_2;
+
+            // Twiddle factors
+            wk1 *= w1; wk2 *= w2;
         }
     }
 

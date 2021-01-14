@@ -92,9 +92,10 @@ namespace FFTE {
                 Complex w = w0;
                 data = ComplexArr(arr_len);
                 data[0] = Complex(1., 0.);
-
-                for(size_t k = 1; k < N*N; k*=2) {
-                    data[k] = Complex(cos(2*M_PI*((double) k)/N), static_cast<int>(dir) * sin(2*M_PI*((double) k)/N));
+                size_t tmp = 2;
+                for(size_t k = 1; k < arr_len; k++) {
+                    data[k] = Complex(cos(2*M_PI*((double) tmp)/N), static_cast<int>(dir) * sin(2*M_PI*((double) tmp)/N));
+                    tmp = tmp*tmp;
                 }
             }
 

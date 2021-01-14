@@ -7,5 +7,5 @@
 
 // Main function. Used for calling different parts of the testing code
 int main() {
-    check_fft(FFTE::Direction::forward);
+    test_FFT_into_csv("testing.csv", 3000);
 }
