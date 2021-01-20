@@ -39,7 +39,7 @@ namespace FFTE {
     }
 
     // Recursive helper function implementing a classic C-T FFT
-    void pow2_FFT_helper(size_t N, Complex* x, Complex* y, size_t s_in, size_t s_out, Omega& w) {
+    void pow2_FFT_helper(size_t N, Complex* x, Complex* y, size_t s_in, size_t s_out, Direction dir) {
         
         // Trivial case
         if(N == 1) {
@@ -51,12 +51,12 @@ namespace FFTE {
         int m = N/2;
 
         // Divide into two sub-problems
-        pow2_FFT_helper(m, x, y, s_in*2, s_out, w);
-        pow2_FFT_helper(m, x+s_in, y+s_out*m, s_in*2, s_out, w);
+        pow2_FFT_helper(m, x, y, s_in*2, s_out, dir);
+        pow2_FFT_helper(m, x+s_in, y+s_out*m, s_in*2, s_out, dir);
 
         // Twiddle Factor
         double inc = 2.*M_PI/N;
-        Complex w1 (cos(inc), static_cast<int>(w.dir)*sin(inc));
+        Complex w1 (cos(inc), static_cast<int>(dir)*sin(inc));
         Complex wj (1., 0.);
 
         // Conquer larger problem accordingly
@@ -71,33 +71,12 @@ namespace FFTE {
     }
 
     // External function to call the C-T radix-2 FFT
-    void pow2_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Omega& w) {
+    void pow2_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Direction dir) {
         const size_t N = sRoot->sz; // Size of problem
-        if(!w()) w(N);                // Initialize the Omega if necessary
-        pow2_FFT_helper(N, x, y, s_in, s_out, w); // Call the radix-2 FFT
+        pow2_FFT_helper(N, x, y, s_in, s_out, dir); // Call the radix-2 FFT
     }
 
-    // Internal helper function to perform a DFT in O(n^2) time
-    void DFT_helper(size_t size, Complex* sig_in, Complex* sig_out, size_t s_in, size_t s_out, Omega& w) {
-        
-        // Find the first element 
-        Complex tmp = sig_in[0];
-        for(size_t n = 1; n < size; n++) {
-            tmp = tmp + sig_in[n*s_in];
-        }
-        sig_out[0] = tmp;
-
-        // Find the rest of the elements
-        for(size_t k = 1; k < size; k++) {
-            tmp = sig_in[0];
-            for(size_t n = 1; n < size; n++) {
-                tmp = tmp + w(k, n, size)*sig_in[n*s_in];
-            }
-            sig_out[k*s_out] = tmp;
-        }
-    }
-
-    // Internal helper function to perform a DFT without an Omega object (there's no reason to initialize one)
+    // Internal helper function to perform a DFT
     void DFT_helper(size_t size, Complex* sig_in, Complex* sig_out, size_t s_in, size_t s_out, Direction dir) {
         // Twiddle with smallest numerator
         Complex w0 = omega(1, size, dir);
@@ -134,8 +113,8 @@ namespace FFTE {
     }
 
     // External-facing function to properly call the internal DFT function
-    void DFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sLeaf, Omega& w) {
-        DFT_helper(sLeaf->sz, x, y, s_in, s_out, w.dir);
+    void DFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sLeaf, Direction dir) {
+        DFT_helper(sLeaf->sz, x, y, s_in, s_out, dir);
     }
 
     // External-facing reference DFT for testing purposes
@@ -144,12 +123,9 @@ namespace FFTE {
     }
 
     // External & Internal function for radix-N1 C-T FFTs
-    void composite_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Omega& w) {
+    void composite_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Direction dir) {
         // Retrieve N
         size_t N = sRoot->sz;
-        
-        // Initialize the omega if necessary
-        if(!w()) w(N);
 
         // Find the children on the call-graph
         biFuncNode* left = sRoot + sRoot->left;
@@ -163,7 +139,7 @@ namespace FFTE {
         * told us to perform a DFT here instead. However, I'm calling this just in case.
         */
         if(N1 == N) {
-            DFT(x, y, s_in, s_out, sRoot, w);
+            DFT(x, y, s_in, s_out, sRoot, dir);
             return;
         }
 
@@ -172,14 +148,12 @@ namespace FFTE {
         Complex* z = (Complex*) malloc(N*sizeof(Complex));
 
         // Find the FFT of the "rows" of the input signal and twiddle them accordingly
-        double inc = 2*M_PI/((double) N);
-        Complex w1 (cos(inc), static_cast<int>(w.dir)*sin(inc));
+        Complex w1 = omega(1, N, dir);
         Complex wn1 = Complex(1., 0.);
         for(size_t n1 = 0; n1 < N1; n1++) {
             Complex wk2 = wn1;
-            right->fptr(x+n1*s_in, z+N2*n1, N1*s_in, 1, right, w);
+            right->fptr(x+n1*s_in, z+N2*n1, N1*s_in, 1, right, dir);
             for(size_t k2 = 1; (k2 < N2) && (n1 > 0); k2++) {
-                // std::cout << "n1 = " << n1 << ", k2 = " << k2 << ", N = " << N << ", wk2 = " << wk2 << ", w(n1,k2,N) = " << w(n1,k2,N) << ", omega(n1*k2, N) = " << omega(n1*k2, N, w.dir) << "\n";
                 z[n1*N2 + k2] = z[n1*N2 + k2]*wk2;
                 wk2 *= wn1;
             }
@@ -191,7 +165,7 @@ namespace FFTE {
         * Take strides of N2 since z is allocated on the fly in this function for N.
         */
         for(size_t k2 = 0; k2 < N2; k2++) {
-            left->fptr(z+k2, y+k2*s_out, N2, N2*s_out, left, w);
+            left->fptr(z+k2, y+k2*s_out, N2, N2*s_out, left, dir);
         }
 
         // Free z when possible
@@ -213,7 +187,7 @@ namespace FFTE {
     }
 
     // Implementation for Rader's Algorithm
-    void rader_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Omega& w, size_t a, size_t ainv) {
+    void rader_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Direction dir, size_t a, size_t ainv) {
         // Size of the problem
         size_t p = sRoot->sz;
         
@@ -239,23 +213,21 @@ namespace FFTE {
         // Convolve the resulting vector with twiddle vector
 
         // First fft the resulting shuffled vector
-        Omega new_w (w.direction());
-        subFFT->fptr(y, z, s_out, 1, subFFT, new_w);
+        subFFT->fptr(y, z, s_out, 1, subFFT, dir);
 
         // Perform cyclic convolution
         for(size_t m = 0; m < (p-1); m++) {
-            Complex Cm = omega(1, p, w.direction());
+            Complex Cm = omega(1, p, dir);
             ak = a;
             for(size_t k = 1; k < (p-1); k++) {
-                Cm = Cm + omega(p*(k*m+ak) - ak, p*(p-1), w.direction());
+                Cm = Cm + omega(p*(k*m+ak) - ak, p*(p-1), dir);
                 ak = (ak*a) % p;
             }
             y[m*s_out] = z[m]*Cm;
         }
 
         // Bring back into signal domain
-        Omega winv (w.inv());
-        subFFT->fptr(y, z, s_out, 1, subFFT, winv);
+        subFFT->fptr(y, z, s_out, 1, subFFT, (Direction) (-1*((int) dir)));
 
         // Shuffle as needed
         ak = 1;
@@ -266,7 +238,7 @@ namespace FFTE {
         }
     }
 
-    // Internal-facing radix-N1 C-T FFT for reference. Doesn't use any call graph or Omega class.
+    // Internal-facing radix-N1 C-T FFT for reference. Doesn't use any call graph.
     // Used for checking correctness of output
     void reference_composite_FFT_helper(size_t N, Complex* x, Complex* y, size_t s_in, size_t s_out, Direction dir) {
         
@@ -308,7 +280,7 @@ namespace FFTE {
     }
 
     // Internal recursive helper-function that calculates the FFT of a signal with length 3^k
-    void pow3_FFT_helper(size_t N, Complex* x, Complex* y, size_t s_in, size_t s_out, Omega& w, Complex& plus120, Complex& minus120) {
+    void pow3_FFT_helper(size_t N, Complex* x, Complex* y, size_t s_in, size_t s_out, Direction dir, Complex& plus120, Complex& minus120) {
         
         // Calculate the DFT manually if necessary
         if(N == 3) {
@@ -322,15 +294,15 @@ namespace FFTE {
         size_t Nprime = N/3;
 
         // Divide into sub-problems
-        pow3_FFT_helper(Nprime, x, y, s_in*3, s_out, w, plus120, minus120);
-        pow3_FFT_helper(Nprime, x+s_in, y+Nprime*s_out, s_in*3, s_out, w, plus120, minus120);
-        pow3_FFT_helper(Nprime, x+2*s_in, y+2*Nprime*s_out, s_in*3, s_out, w, plus120, minus120);
+        pow3_FFT_helper(Nprime, x, y, s_in*3, s_out, dir, plus120, minus120);
+        pow3_FFT_helper(Nprime, x+s_in, y+Nprime*s_out, s_in*3, s_out, dir, plus120, minus120);
+        pow3_FFT_helper(Nprime, x+2*s_in, y+2*Nprime*s_out, s_in*3, s_out, dir, plus120, minus120);
 
         // Combine the sub-problem solutions
         Complex wk1 (1., 0.); Complex wk2 (1., 0.);
         double inc = 2.*M_PI/N;
-        Complex w1 (cos(  inc), static_cast<int>(w.dir)*sin(  inc));
-        Complex w2 (cos(2*inc), static_cast<int>(w.dir)*sin(2*inc));
+        Complex w1 (cos(  inc), static_cast<int>(dir)*sin(  inc));
+        Complex w2 (cos(2*inc), static_cast<int>(dir)*sin(2*inc));
         for(size_t k = 0; k < Nprime; k++) {
             // Index calculation
             auto k1 = k * s_out;
@@ -353,46 +325,14 @@ namespace FFTE {
     }
 
     // External-facing function for performing an FFT on signal with length N = 3^k
-    void pow3_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Omega& w) {
+    void pow3_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Direction dir) {
         const size_t N = sRoot->sz;
-        if(!w()) w(N);
         Complex plus120 {-0.5, -sqrt(3)/2.};
         Complex minus120 {-0.5, sqrt(3)/2.};
-        switch(w.dir) {
-            case Direction::forward: pow3_FFT_helper(N, x, y, s_in, s_out, w, plus120, minus120); break;
-            case Direction::inverse: pow3_FFT_helper(N, x, y, s_in, s_out, w, minus120, plus120); break;
+        switch(dir) {
+            case Direction::forward: pow3_FFT_helper(N, x, y, s_in, s_out, dir, plus120, minus120); break;
+            case Direction::inverse: pow3_FFT_helper(N, x, y, s_in, s_out, dir, minus120, plus120); break;
         }
     }
 
-#if 0
-    // DOES NOT WORK, DO NOT USE
-    void pow2_FFT_it(Complex* sig_in, size_t size, Complex* sig_out) {
-        int log_2_sz = 0;
-        while(size >> (log_2_sz+1)) log_2_sz++;
-
-        Complex w {cos(2*M_PI/(double) size), -sin(2*M_PI/(double) size)};
-        Complex* Omega = (Complex*) malloc(size*sizeof(Complex)>>1);
-        *Omega = Complex(1., 0.);
-        sig_out[0] = sig_in[0];
-        sig_out[size-1] = sig_in[size-1];
-        for(size_t i = 1; i < (size>>1); i++){
-            auto rev_i = reverse(i, log_2_sz);
-            sig_out[i] = sig_in[rev_i];
-            sig_out[rev_i] = sig_in[i];
-            Omega[i] = Omega[i-1]*w;
-        }
-
-        for(int i = 1; i <= log_2_sz; i++) {
-            size_t L_o = 2  << (i-1);
-            size_t r   = size >> i;
-            for(size_t j = 0; j < r; j++) {
-                for(size_t k = 0; k < L_o; k++) {
-                    Complex sig_out_tmp = sig_out[j*L_o+k];
-                    sig_out[j*L_o+k]     = sig_out_tmp + Omega[k] * sig_out[(j+1)*L_o+k];
-                    sig_out[(j+1)*L_o+k] = sig_out_tmp - Omega[k] * sig_out[(j+1)*L_o+k];
-                }
-            }
-        }
-    }
-#endif
 }

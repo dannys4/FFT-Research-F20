@@ -8,7 +8,6 @@
 #include <functional>
 #include <chrono>
 #include <complex>
-#include "omega.hpp"
 #include <cassert>
 #include <fstream>
 

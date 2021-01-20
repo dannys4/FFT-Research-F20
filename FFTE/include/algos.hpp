@@ -4,9 +4,10 @@
  * Code Author: Danny Sharp
  * This file is part of FFTE (Fast Fourier Transform Engine)
  */
-#include <cmath>
 #include "complex.hpp"
-#include "omega.hpp"
+#include "direction.hpp"
+#include <cmath>
+#include <vector>
 #include <iostream>
 
 // Check if we can use modern C++ features
@@ -18,17 +19,17 @@ namespace FFTE {
 
     // Functions in the algos implementation file facing externally
     Complex omega(size_t power, size_t N, Direction dir);
-    void pow2_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Omega& w);
+    void pow2_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Direction dir);
 
-    void DFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sLeaf, Omega& w);
+    void DFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sLeaf, Direction dir);
     void reference_DFT(size_t N, Complex* x, Complex* y, Direction dir);
 
-    void composite_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Omega& w);
+    void composite_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Direction dir);
     void reference_composite_FFT(size_t N, Complex* x, Complex* y, Direction dir);
 
-    void pow3_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Omega& w);
+    void pow3_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Direction dir);
 
-    void rader_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Omega& w, size_t a, size_t ainv);
+    void rader_FFT(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Direction dir, size_t a, size_t ainv);
 
     enum fft_type {pow2, pow3, pow4, composite, discrete, rader};
 
@@ -40,13 +41,13 @@ namespace FFTE {
         public:
             constexpr Fourier_Transform(fft_type fft): type(fft) {}
             constexpr Fourier_Transform(Fourier_Transform& fft): type(fft.type) {}
-            void operator()(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Omega& w) {
+            void operator()(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Direction dir) {
                 switch(type) {
-                    case fft_type::pow2: pow2_FFT(x, y, s_in, s_out, sRoot, w); break;
-                    case fft_type::pow3: pow3_FFT(x, y, s_in, s_out, sRoot, w); break;
-                    case fft_type::pow4: pow2_FFT(x, y, s_in, s_out, sRoot, w); break;
-                    case fft_type::composite: composite_FFT(x, y, s_in, s_out, sRoot, w); break;
-                    case fft_type::discrete: DFT(x, y, s_in, s_out, sRoot, w); break;
+                    case fft_type::pow2: pow2_FFT(x, y, s_in, s_out, sRoot, dir); break;
+                    case fft_type::pow3: pow3_FFT(x, y, s_in, s_out, sRoot, dir); break;
+                    case fft_type::pow4: pow2_FFT(x, y, s_in, s_out, sRoot, dir); break;
+                    case fft_type::composite: composite_FFT(x, y, s_in, s_out, sRoot, dir); break;
+                    case fft_type::discrete: DFT(x, y, s_in, s_out, sRoot, dir); break;
                     default: std::cerr << "This is not supported or implemented yet\n"; exit(-1);
                 }
             }
@@ -79,14 +80,14 @@ namespace FFTE {
             explicit Fourier_Transform(size_t a, size_t ainv) {
                 root = a; root_inv = ainv; type = fft_type::rader;
             }
-            virtual void operator()(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Omega& w) {
+            virtual void operator()(Complex* x, Complex* y, size_t s_in, size_t s_out, biFuncNode* sRoot, Direction dir) {
                 switch(type) {
-                    case fft_type::pow2: pow2_FFT(x, y, s_in, s_out, sRoot, w); break;
-                    case fft_type::pow3: pow3_FFT(x, y, s_in, s_out, sRoot, w); break;
-                    case fft_type::pow4: pow2_FFT(x, y, s_in, s_out, sRoot, w); break;
-                    case fft_type::composite: composite_FFT(x, y, s_in, s_out, sRoot, w); break;
-                    case fft_type::discrete: DFT(x, y, s_in, s_out, sRoot, w); break;
-                    case fft_type::rader: rader_FFT(x, y, s_in, s_out, sRoot, w, root, root_inv); break;
+                    case fft_type::pow2: pow2_FFT(x, y, s_in, s_out, sRoot, dir); break;
+                    case fft_type::pow3: pow3_FFT(x, y, s_in, s_out, sRoot, dir); break;
+                    case fft_type::pow4: pow2_FFT(x, y, s_in, s_out, sRoot, dir); break;
+                    case fft_type::composite: composite_FFT(x, y, s_in, s_out, sRoot, dir); break;
+                    case fft_type::discrete: DFT(x, y, s_in, s_out, sRoot, dir); break;
+                    case fft_type::rader: rader_FFT(x, y, s_in, s_out, sRoot, dir, root, root_inv); break;
                     default: std::cerr << "Problem creating Fourier Transform functor\n"; exit(-1);
                 }
             }

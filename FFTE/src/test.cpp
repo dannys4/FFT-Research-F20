@@ -1,9 +1,9 @@
-#include "test.hpp"
 /**
  * Code Author: Danny Sharp
  * This file is part of FFTE (Fast Fourier Transform Engine)
  */
 
+#include "test.hpp"
 #define CHECKSUM_COMP 1
 #define ENTRYWISE_COMP 0
 #define FFT_LENGTH 19*27*5*7*11
@@ -34,8 +34,7 @@ void check_fft(Direction dir) {
     for(int i = 0; i < n; i++) in[i] = Complex(i, 2.*i);
 
     reference_composite_FFT(n, in, out_ref, dir);
-    Omega w(dir);
-    root->fptr(in, out_new, 1, 1, root, w);
+    root->fptr(in, out_new, 1, 1, root, dir);
 
     
 #if CHECKSUM_COMP
@@ -61,47 +60,6 @@ void check_fft(Direction dir) {
         case Direction::forward: std::cout << "Done checking the FFT! \n\n";  break;
         case Direction::inverse: std::cout << "Done checking the IFFT!\n\n"; break;
     }
-}
-
-void check_omega() {
-    std::cout << "Checking the correctness of the Omega class...\n";
-    size_t N1 = 9;
-    size_t N2 = 5;
-    size_t N3 = 7;
-    size_t N = N1*N2*N3;
-    Omega w (N, Direction::forward);
-    double sum = 0.;
-    for(size_t i = 0; i < N; i++) {
-        for(size_t j = 0; j < N; j++) sum += (w(i*j, N)-omega(i*j, N, Direction::forward)).modulus();
-    }
-    std::cout << "L2 Error in initialization with N = " << N << " is " << sum << "\n";
-    
-    sum = 0.;
-    for(size_t i = 0; i < N1; i++) {
-        for(size_t j = 0; j < N1; j++) sum += (w(i*j, N1)-omega(i*j, N1, Direction::forward)).modulus();
-    }
-    std::cout << "L2 Error in Checking against N1 = " << N1 << " is " << sum << "\n";
-    
-    sum = 0.;
-    for(size_t i = 0; i < N2; i++) {
-        for(size_t j = 0; j < N2; j++) sum += (w(i*j, N2)-omega(i*j, N2, Direction::forward)).modulus();
-    }
-    std::cout << "L2 Error in Checking against N2 = " << N2 << " is " << sum << "\n";
-    
-    sum = 0.;
-    for(size_t i = 0; i < N3; i++) {
-        for(size_t j = 0; j < N3; j++) {
-            Complex ww = w(i,j, N3);
-            Complex om = omega(i*j, N3, Direction::forward);
-
-#if ENTRYWISE_COMP
-            std::cout << "w(" << i << "," << j << "," << N3 << ") = " << ww << ", omega(" << i << "*" << j << ", " << N3 << ") = " << om << "\n";
-#endif
-            sum += (ww-om).modulus();
-        }
-    }
-    std::cout << "L2 Error in Checking against N3 = " << N3 << " is " << sum << "\n";
-    std::cout << "Done checking the Omega class!\n\n";
 }
 
 void check_fft_tree() {
@@ -138,17 +96,17 @@ void time_fft() {
     auto out_new = (Complex*) malloc(n*sizeof(Complex));
 
     for(size_t i = 0; i < n; i++) in[i] = Complex(i, 2*i);
-    Omega w(Direction::forward);
+    Direction dir = Direction::forward;
 
     int Ntrials = 10;
 
     auto start = clock::now();
-    root->fptr(in, out_new, 1, 1, root, w);
+    root->fptr(in, out_new, 1, 1, root, dir);
     auto end = clock::now();
     auto new_fft = duration_cast<nanoseconds>(end-start).count();
     for(int i = 1; i < Ntrials; i++) {
         start = clock::now();
-        root->fptr(in, out_new, 1, 1, root, w);
+        root->fptr(in, out_new, 1, 1, root, dir);
         end = clock::now();
         new_fft += duration_cast<nanoseconds>(end-start).count();
         if(in == (Complex*) 0x12345) std::cout << "this shouldn't print\n";
@@ -197,22 +155,22 @@ void test_FFT_into_csv(std::string filename, int maxsize) {
         int ell = getNumNodes(N);
         biFuncNode root[ell];
         init_fft_tree(root, N);
-        Omega w(Direction::forward);
+        Direction dir = Direction::forward;
         auto end = clock::now();
         auto setupTime = duration_cast<nanoseconds>(end-start).count();
 
         start = clock::now();
-        root->fptr(x, y_new, 1, 1, root, w);
+        root->fptr(x, y_new, 1, 1, root, dir);
         end = clock::now();
         auto myTime = duration_cast<nanoseconds>(end-start).count();
 
         start = clock::now();
-        reference_composite_FFT(N, x, y_ctc, Direction::forward);
+        reference_composite_FFT(N, x, y_ctc, dir);
         end = clock::now();
         auto compositeTime = duration_cast<nanoseconds>(end-start).count();
 
         start = clock::now();
-        reference_DFT(N, x, y_dft, Direction::forward);
+        reference_DFT(N, x, y_dft, dir);
         end = clock::now();
         auto dftTime = duration_cast<nanoseconds>(end-start).count();
 
@@ -312,82 +270,3 @@ void time_const_tree() {
     std::cout << "Done timing tree construction performance!\n\n";
 }
 
-// Times how fast the call to the function omega is
-size_t omega_fcn_time(std::vector<size_t>& Nvec) {
-    using std::chrono::duration_cast;
-    using std::chrono::nanoseconds;
-    typedef std::chrono::high_resolution_clock clock;
-
-    auto start = clock::now();
-    for(auto& Nj : Nvec) {
-        for(size_t i = 0; i < Nj; i++) {
-            for(size_t j = 0; j < Nj; j++) {
-                Complex w0 = omega(i*j, Nj, Direction::forward);
-                if(Nj == 16) std::cout << w0 << "\n";
-            }
-        }
-    }
-    auto end = clock::now();
-    return duration_cast<nanoseconds>(end-start).count();
-}
-
-// Times how fast using the Omega class is
-size_t omega_class_time(std::vector<size_t>& Nvec, Omega& w) {
-    using std::chrono::duration_cast;
-    using std::chrono::nanoseconds;
-    typedef std::chrono::high_resolution_clock clock;
-
-    auto start = clock::now();
-    for(auto& Nj : Nvec) {
-        for(size_t i = 0; i < Nj; i++) {
-            for(size_t j = 0; j < Nj; j++) {
-                Complex w0 = w(i, j, Nj);
-                if(Nj == 16) std::cout << w0 << "\n";
-            }
-        }
-    }
-    auto end = clock::now();
-    return duration_cast<nanoseconds>(end-start).count();
-}
-
-// Compares the time of the omega function to the omega class
-void time_omega() {
-    std::cout << "Comparing the time to use the Omega class vs. explicitly constructing omega at every iteration...\n";
-    size_t N_factors = 10;
-    int Njmax = 10;
-    
-    auto rand = std::bind(std::uniform_int_distribution<>{1,Njmax}, std::default_random_engine{});
-
-    size_t Ntrials = 100;
-    
-    std::vector<size_t> Nvec {};
-    size_t N = 1;
-    for(size_t i = 0; i < N_factors; i++) {
-        size_t tmp = rand();
-        N *= tmp;
-        Nvec.push_back(tmp);
-    }
-    Omega w (N, Direction::forward);
-    auto fcn_time = omega_fcn_time(Nvec);
-    auto class_time = omega_class_time(Nvec, w);
-
-    for(size_t i = 0; i < Ntrials; i++) {
-        Nvec.clear();
-        N = 1;
-        for(size_t i = 0; i < N_factors; i++) {
-            size_t tmp = rand();
-            N *= tmp;
-            Nvec.push_back(tmp);
-        }
-        w(N);
-
-        fcn_time += omega_fcn_time(Nvec);
-        class_time += omega_class_time(Nvec, w);
-    }
-
-    std::cout << "Naive implementation elapsed time is " << (fcn_time/((double) Ntrials))*1.e-9 << "s\n";
-
-    std::cout << "Class-based implementation of seconds is " << (class_time/((double) Ntrials))*1.e-9 << "s\n";
-
-    std::cout << "Done timing the omega construction!\n\n";
-}

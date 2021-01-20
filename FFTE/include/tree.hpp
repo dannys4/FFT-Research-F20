@@ -17,6 +17,7 @@
 #define FFTE_RADER_MIN 1000000
 
 namespace FFTE {
+
     /* Initialize an fft tree given an appropriately sized empty array of 
     * function nodes to hold the information
     */

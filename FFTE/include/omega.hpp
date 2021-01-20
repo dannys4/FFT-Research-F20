@@ -5,7 +5,17 @@
  * This file is part of FFTE (Fast Fourier Transform Engine)
  */
 
+/**
+ * This file includes capabilities to precompute some values for
+ * exponential factors then use those precomputed values to calculate
+ * any exponential factor using binary exponentiation. Also includes
+ * a caching feature to store these. Even with smart binary exponentiation,
+ * these features are too slow to use and are primarily deprecated. There's
+ * no guarantee that these actually work and are deprecated as of 1/20/2021.
+ */
+
 #include "complex.hpp"
+#include "direction.hpp"
 #include <vector>
 
 /* The ability to cache exponential factors.
@@ -53,8 +63,6 @@ namespace FFTE {
             }
     };
 #endif
-    // An enum for knowing whether the transform is forward or inverse
-    enum class Direction {forward = -1, inverse = 1};
 
     // A class to hold the exponential factors of forward or inverse Fourier transforms
     class Omega { // exp(2pi i j / N)
@@ -80,7 +88,7 @@ namespace FFTE {
             void init(size_t length) {
                 N = length;
 
-                int arr_len = 2*log2(length);
+                size_t arr_len = 2*log2(length);
 
                 // Base the initialization on an exponential factor with
                 // minimal increment
@@ -89,12 +97,12 @@ namespace FFTE {
 
                 // Allocate and initialize data
                 // TODO: fix this accuracy stuff
-                Complex w = w0;
                 data = ComplexArr(arr_len);
                 data[0] = Complex(1., 0.);
+                data[1] = Complex(cos(a), static_cast<int>(dir) * sin(a));
                 size_t tmp = 2;
-                for(size_t k = 1; k < arr_len; k++) {
-                    data[k] = Complex(cos(2*M_PI*((double) tmp)/N), static_cast<int>(dir) * sin(2*M_PI*((double) tmp)/N));
+                for(size_t k = 2; k < arr_len; k++) {
+                    data[k] = data[k-1]*data[k-1];
                     tmp = tmp*tmp;
                 }
             }
