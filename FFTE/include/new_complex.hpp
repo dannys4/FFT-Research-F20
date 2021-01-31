@@ -1,9 +1,11 @@
 #include <type_traits>
 #include <iostream>
 
-template<typename T, class = typename std::enable_if<std::is_floating_point<T>::value>::type>
+
+
+template<typename Floating, int N = 1, class = typename std::enable_if<std::is_floating_point<Floating>::value>::type>
 class mytype {
     public:
-        T number;
-        mytype(T n): number(n) {}
+        Floating number;
+        mytype(Floating n): number(n) {}
 };
