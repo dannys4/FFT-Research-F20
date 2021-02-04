@@ -36,44 +36,67 @@ namespace FFTE {
     // Used for checking sizes of the packs
     template<int N> struct size_pack_type {};
 
-    // Used for checking if it only uses one complex number
+    // Used for checking if it only uses one number
     template<int N, typename I = size_pack_type<1>> struct is_1_pack {};
 
     template<int N> struct is_1_pack<N, size_pack_type<N>> {
         typedef int type;
+        static constexpr bool value = true;
     };
 
-    // Used for checking if it's two complex numbers
+    // Used for checking if it's two numbers
     template<int N, typename I = size_pack_type<2>> struct is_2_pack {};
 
     template<int N> struct is_2_pack<N, size_pack_type<N>> {
         typedef int type;
+        static constexpr bool value = true;
     };
 
+    // Used for checking if it's four numbers
+    template<int N, typename I = size_pack_type<4>> struct is_4_pack {};
+
+    template<int N> struct is_4_pack<N, size_pack_type<N>> {
+        typedef int type;
+        static constexpr bool value = true;
+    };
+
+    // Used for getting vector pack types
+    template<typename T, int N> struct pack {};
+    template<> struct pack<float, 4> { typedef __m128 type; };
+    template<> struct pack<double, 2> { typedef __m128d type; };
+    template<> struct pack<double, 4> { typedef __m256d type; };
+
+    template<typename T, int N> struct mm_zero {};
+    template<typename T, int N> struct mm_load {};
+    template<typename T, int N> struct mm_store {};
 
     // Some simple operations that will be useful for vectorized types
-    template<typename T, int N, typename = void, typename = void> struct mm_zero {
+    template<typename T>
+    struct mm_zero<T, 1> {
         static inline T get(){return static_cast<T>(0);}
     };
 
-    template<typename T, int N, typename = void, typename = void> struct mm_load {
+    template<typename T>
+    struct mm_load<T, 1> {
         static inline T load(T const *src) { return src[0]; }
     };
 
-    template<typename T, int N, typename = void, typename = void> struct mm_store {
+    template<typename T>
+    struct mm_store<T, 1> {
         static inline void store(T const *dest, T const &src) { dest[0] = src; }
     };
 
     // Real basic arithmetic for the "none" case
-    template<typename T> inline T mm_fmadd(T const &a, T const &b, T const &c){ return a * b + c; }
-    template<typename T> inline T mm_sqrt(T const &a){ return std::sqrt(a); }
-    template<typename T> inline T mm_abs(T const &a){ return std::abs(a); }
+    template<typename T>
+    inline T mm_fmadd(T const &a, T const &b, T const &c){ return a * b + c; }
+    template<typename T>
+    inline T mm_sqrt(T const &a){ return std::sqrt(a); }
+    template<typename T>
+    inline T mm_abs(T const &a){ return std::abs(a); }
 
     // Complex basic arithmetic for the "none" case
     template<typename T>
     inline typename std::enable_if<is_real<T>::value || is_complex<T>::value, T>::type mm_complex_mul(T const &a, T const &b){ return a * b; }
-    template<typename T>
-    inline typename std::enable_if<is_real<T>::value || is_complex<T>::value, T>::type mm_complex_fmadd(T const &a, T const &b, T const &c){ return a * b + c; }
     template<typename T>
     inline typename std::enable_if<is_real<T>::value || is_complex<T>::value, T>::type mm_complex_div(T const &a, T const &b){ return a / b; }
     template<typename T>
@@ -87,33 +110,91 @@ namespace FFTE {
     }
 
     // Setting the zero if there are two pairs of single precision complex numbers
-    template<typename T, int N>
-    struct mm_zero<T, N, typename std::enable_if<is_float<T>::value, T>::type, typename is_2_pack<N>::type> {
+    template<>
+    struct mm_zero<float, 4> {
         static inline __m128 get(){ return _mm_setzero_ps(); }
     };
 
-    // Loading from a pointer to at least 2 floats into a vectorized type
-    template<typename T, int N>
-    struct mm_load<T, N, typename std::enable_if<is_float<T>::value, T>::type, typename is_2_pack<N>::type> {
-        static inline __m128 load(T const *src) { return __mm_load_ps(src); }
+    // Loading from a pointer to at least 4 floats into a vectorized type
+    template<>
+    struct mm_load<float, 4> {
+        static inline __m128 load(float const *src) { return _mm_loadu_ps(src); }
     };
 
-    // Stores two floats from a vectorized type in a pointer of floats
-    template<typename T, int N>
-    struct mm_store<T, N, typename std::enable_if<is_float<T>::value, T>::type, typename is_2_pack<N>::type>  {
-        static inline void store(T const *dest, __m128 const &src) { __mm_store_ps(dest, src); }
+    // Stores four floats from a vectorized type in a pointer of floats
+    template<>
+    struct mm_store<float, 4>  {
+        static inline void store(float *dest, __m128 const &src) { _mm_storeu_ps(dest, src); }
     };
 
-    template<typename T>
-    inline std::enable_if< mm_fmadd<__m128>(__m128 const &a, __m128 const &b, __m128 const &c){ return a * b + c; }
+    // Setting the zero if there is one pair of double precision complex numbers
+    template<>
+    struct mm_zero<double, 2> {
+        static inline __m128d get(){ return _mm_setzero_pd(); }
+    };
+
+    // Loading from a pointer to at least 2 doubles into a vectorized type
+    template<>
+    struct mm_load<double, 2> {
+        static inline __m128d load(double const *src) { return _mm_loadu_pd(src); }
+    };
+
+    // Stores two doubles from a vectorized type in a pointer of doubles
+    template<>
+    struct mm_store<double, 2>  {
+        static inline void store(double *dest, __m128d const &src) { _mm_storeu_pd(dest, src); }
+    };
+
+    // Setting the zero if there is one pair of double precision complex numbers
+    template<>
+    struct mm_zero<double, 4> {
+        static inline __m256d get(){ return _mm256_setzero_pd(); }
+    };
+
+    // Loading from a pointer to at least 2 doubles into a vectorized type
+    template<>
+    struct mm_load<double, 4> {
+        static inline __m256d load(double const *src) { return _mm256_loadu_pd(src); }
+    };
+
+    // Stores two doubles from a vectorized type in a pointer of doubles
+    template<>
+    struct mm_store<double, 4>  {
+        static inline void store(double *dest, __m256d const &src) { _mm256_storeu_pd(dest, src); }
+    };
+
+    // Complex multiplication using vector packs
+    
+    // Two pairs of floats
+    inline pack<float, 4>::type mm_complex_mul(pack<float, 4>::type x, pack<float, 4>::type y) {
+        auto cc = _mm_permute_ps(y, 0b10100000);
+        auto ba = _mm_permute_ps(x, 0b10110001);
+        auto dd = _mm_permute_ps(y, 0b11110101);
+        auto dba = _mm_mul_ps(ba, dd);
+        auto mult = _mm_fmaddsub_ps(x, cc, dba);
+        return mult;
+    }
+    
+    // Pair of doubles
+    inline pack<double, 2>::type mm_complex_mul(pack<double, 2>::type const &x, pack<double, 2>::type const &y) {
+        auto cc = _mm_permute_pd(y, 0);
+        auto ba = _mm_permute_pd(x, 0b01);
+        auto dd = _mm_permute_pd(y, 0b11);
+        auto dba = _mm_mul_pd(ba, dd);
+        auto mult = _mm_fmaddsub_pd(x, cc, dba);
+        return mult;
+    }
+    
+    // Two pairs of doubles
+    inline pack<double, 4>::type mm_complex_mul(pack<double, 4>::type x, pack<double, 4>::type y) {
+        auto cc = _mm256_permute_pd(y, 0b0000);
+        auto ba = _mm256_permute_pd(x, 0b0101);
+        auto dd = _mm256_permute_pd(y, 0b1111);
+        auto dba = _mm256_mul_pd(ba, dd);
+        auto mult = _mm256_fmaddsub_pd(x, cc, dba);
+        return mult;
+    }
+
 }
 
-#endif // End VEC_TYPES_HPP
-
-/**
- *  // Setting the zero if there is one pair of double precision complex numbers
- *  template<typename T, int N>
- *  struct mm_zero<T, N, typename std::enable_if<is_float<T>::value, T>::type, typename is_2_pack<N>::type> {
- *      static inline __m128d get(){ return _mm_setzero_pd(); }
- *  };
-*/
+#endif
