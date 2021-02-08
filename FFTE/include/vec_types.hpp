@@ -65,6 +65,7 @@ namespace FFTE {
     template<> struct pack<float, 4> { typedef __m128 type; };
     template<> struct pack<double, 2> { typedef __m128d type; };
     template<> struct pack<double, 4> { typedef __m256d type; };
+    template<> struct pack<float, 8> { typedef __m256 type; };
 
     template<typename T, int N> struct mm_zero {};
     template<typename T, int N> struct mm_load {};
@@ -166,12 +167,22 @@ namespace FFTE {
     // Complex multiplication using vector packs
     
     // Two pairs of floats
-    inline pack<float, 4>::type mm_complex_mul(pack<float, 4>::type x, pack<float, 4>::type y) {
+    inline pack<float, 4>::type mm_complex_mul(pack<float, 4>::type const &x, pack<float, 4>::type const &y) {
         auto cc = _mm_permute_ps(y, 0b10100000);
         auto ba = _mm_permute_ps(x, 0b10110001);
         auto dd = _mm_permute_ps(y, 0b11110101);
         auto dba = _mm_mul_ps(ba, dd);
         auto mult = _mm_fmaddsub_ps(x, cc, dba);
+        return mult;
+    }
+
+    // Four pairs of floats
+    inline pack<float, 8>::type mm_complex_mul(pack<float, 8>::type const &x, pack<float, 8>::type const &y) {
+        auto cc = _mm256_permute_ps(y, 0b10100000);
+        auto ba = _mm256_permute_ps(x, 0b10110001);
+        auto dd = _mm256_permute_ps(y, 0b11110101);
+        auto dba = _mm256_mul_ps(ba, dd);
+        auto mult = _mm256_fmaddsub_ps(x, cc, dba);
         return mult;
     }
     
@@ -186,13 +197,57 @@ namespace FFTE {
     }
     
     // Two pairs of doubles
-    inline pack<double, 4>::type mm_complex_mul(pack<double, 4>::type x, pack<double, 4>::type y) {
+    inline pack<double, 4>::type mm_complex_mul(pack<double, 4>::type const &x, pack<double, 4>::type const &y) {
         auto cc = _mm256_permute_pd(y, 0b0000);
         auto ba = _mm256_permute_pd(x, 0b0101);
         auto dd = _mm256_permute_pd(y, 0b1111);
         auto dba = _mm256_mul_pd(ba, dd);
         auto mult = _mm256_fmaddsub_pd(x, cc, dba);
         return mult;
+    }
+
+    // Addition using vector packs
+
+    // Four floats
+    inline pack<float, 4>::type mm_add(pack<float, 4>::type const &x,pack<float, 4>::type const &y) {
+        return _mm_add_ps(x, y);
+    }
+
+    // Eight floats
+    inline pack<float, 8>::type mm_add(pack<float, 8>::type const &x, pack<float, 8>::type const &y) {
+        return _mm256_add_ps(x, y);
+    }
+
+    // Two doubles
+    inline pack<double, 2>::type mm_add(pack<double, 2>::type const &x, pack<double, 2>::type const &y) {
+        return _mm_add_pd(x, y);
+    }
+
+    // Four doubles
+    inline pack<double, 4>::type mm_add(pack<double, 4>::type const &x, pack<double, 4>::type const &y) {
+        return _mm256_add_pd(x, y);
+    }
+
+    // Subtraction using vector packs
+
+    // Four floats
+    inline pack<float, 4>::type mm_sub(pack<float, 4>::type const &x,pack<float, 4>::type const &y) {
+        return _mm_sub_ps(x, y);
+    }
+
+    // Eight floats
+    inline pack<float, 8>::type mm_sub(pack<float, 8>::type const &x, pack<float, 8>::type const &y) {
+        return _mm256_sub_ps(x, y);
+    }
+
+    // Two doubles
+    inline pack<double, 2>::type mm_sub(pack<double, 2>::type const &x, pack<double, 2>::type const &y) {
+        return _mm_sub_pd(x, y);
+    }
+
+    // Four doubles
+    inline pack<double, 4>::type mm_sub(pack<double, 4>::type const &x, pack<double, 4>::type const &y) {
+        return _mm256_sub_pd(x, y);
     }
 
 }

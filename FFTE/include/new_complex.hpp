@@ -7,6 +7,9 @@ namespace FFTE {
     class NewComplex {
         public:
             explicit NewComplex(F* const f) {
+                // 2 doubles-- pack<double, 2>::type == _m128d
+                // 4 doubles-- pack<double, 4>::type == _m256d
+                // 4 floats -- pack<float, 4>::type == _m128
                 typename pack<F, N>::type v = mm_load<F,N>::load(f);
                 var = v;
             }

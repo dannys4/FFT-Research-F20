@@ -17,7 +17,8 @@ int main() {
     FFTE::NewComplex<double, 2> xd2 (d2);
     FFTE::NewComplex<float, 4>  xs4 (s4);
 
-    auto nn = xs4*xs4;
-    nn.getComplex(s4);
-    std::cout << "s4 = " << s4[0] << ", " << s4[1] << ", " << s4[2] << ", " << s4[3] << "\n";
+    // [1+2i, 3+4i] .* [1+2i, 3+4i]
+    auto nn = xd4*xd4;
+    nn.getComplex(d4);
+    std::cout << "d4 = " << d4[0] << " + " << d4[1] << "i, " << d4[2] << " + " << d4[3] << "i\n";
 }
