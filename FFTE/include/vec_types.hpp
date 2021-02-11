@@ -67,9 +67,10 @@ namespace FFTE {
     template<> struct pack<double, 4> { typedef __m256d type; };
     template<> struct pack<float, 8> { typedef __m256 type; };
 
-    template<typename T, int N> struct mm_zero {};
-    template<typename T, int N> struct mm_load {};
-    template<typename T, int N> struct mm_store {};
+    template<typename F, int L> struct mm_zero {};
+    template<typename F, int L> struct mm_load {};
+    template<typename F, int L> struct mm_store {};
+    template<typename F, int L> struct mm_pair_set{};
 
     // Some simple operations that will be useful for vectorized types
     template<typename T>
@@ -113,19 +114,49 @@ namespace FFTE {
     // Setting the zero if there are two pairs of single precision complex numbers
     template<>
     struct mm_zero<float, 4> {
-        static inline __m128 get(){ return _mm_setzero_ps(); }
+        static inline pack<float, 4>::type get(){ return _mm_setzero_ps(); }
     };
 
     // Loading from a pointer to at least 4 floats into a vectorized type
     template<>
     struct mm_load<float, 4> {
-        static inline __m128 load(float const *src) { return _mm_loadu_ps(src); }
+        static inline pack<float, 4>::type load(float const *src) { return _mm_loadu_ps(src); }
     };
 
     // Stores four floats from a vectorized type in a pointer of floats
     template<>
     struct mm_store<float, 4>  {
-        static inline void store(float *dest, __m128 const &src) { _mm_storeu_ps(dest, src); }
+        static inline void store(float *dest, pack<float, 4>::type const &src) { _mm_storeu_ps(dest, src); }
+    };
+
+    // Stores pair of floats into vectorized type
+    template<>
+    struct mm_pair_set<float, 4> {
+        static inline pack<float, 4>::type set(float x, float y) { return _mm_setr_ps(x, y, x, y); }
+    };
+
+    // Setting the zero if there are four pairs of single precision complex numbers
+    template<>
+    struct mm_zero<float, 8> {
+        static inline pack<float, 8>::type get(){ return _mm256_setzero_ps(); }
+    };
+
+    // Loading from a pointer to at least 8 floats into a vectorized type
+    template<>
+    struct mm_load<float, 8> {
+        static inline pack<float, 8>::type load(float const *src) { return _mm256_loadu_ps(src); }
+    };
+
+    // Stores four floats from a vectorized type in a pointer of floats
+    template<>
+    struct mm_store<float, 8>  {
+        static inline void store(float *dest, pack<float, 8>::type const &src) { _mm256_storeu_ps(dest, src); }
+    };
+
+    // Stores pair of floats into vectorized type
+    template<>
+    struct mm_pair_set<float, 8> {
+        static inline pack<float, 8>::type set(float x, float y) { return _mm256_setr_ps(x, y, x, y, x, y, x, y); }
     };
 
     // Setting the zero if there is one pair of double precision complex numbers
@@ -146,6 +177,12 @@ namespace FFTE {
         static inline void store(double *dest, __m128d const &src) { _mm_storeu_pd(dest, src); }
     };
 
+    // Stores pair of doubles into vectorized type
+    template<>
+    struct mm_pair_set<double, 2> {
+        static inline pack<double, 2>::type set(double x, double y) { return _mm_setr_pd(x, y); }
+    };
+
     // Setting the zero if there is one pair of double precision complex numbers
     template<>
     struct mm_zero<double, 4> {
@@ -162,6 +199,12 @@ namespace FFTE {
     template<>
     struct mm_store<double, 4>  {
         static inline void store(double *dest, __m256d const &src) { _mm256_storeu_pd(dest, src); }
+    };
+
+    // Stores pair of floats into vectorized type
+    template<>
+    struct mm_pair_set<double, 4> {
+        static inline pack<double, 4>::type set(double x, double y) { return _mm256_setr_pd(x, y, x, y); }
     };
 
     // Complex multiplication using vector packs
@@ -248,6 +291,91 @@ namespace FFTE {
     // Four doubles
     inline pack<double, 4>::type mm_sub(pack<double, 4>::type const &x, pack<double, 4>::type const &y) {
         return _mm256_sub_pd(x, y);
+    }
+
+    // Squared modulus of the complex numbers in a pack
+
+    // Squared modulus of two 32-bit complex numbers in a pack
+    inline pack<float, 4>::type mm_complex_sq_mod(pack<float, 4>::type const &x) {
+        return _mm_or_ps(_mm_dp_ps(x, x, 0b11001100), _mm_dp_ps(x, x, 0b00110011));
+    }
+
+    // Squared modulus of four 32-bit complex numbers in a pack
+    inline pack<float, 8>::type mm_complex_sq_mod(pack<float, 8>::type const &x) {
+        return _mm256_or_ps(_mm256_dp_ps(x, x, 0b11001100), _mm256_dp_ps(x, x, 0b00110011));
+    }
+
+    // Squared modulus of one 64-bit complex number in a pack
+    inline pack<double, 2>::type mm_complex_sq_mod(pack<double, 2>::type const &x) {
+        return _mm_dp_pd(x, x, 0b11111111);
+    }
+
+    // Squared modulus of two 64-bit complex numbers in a pack
+    inline pack<double, 4>::type mm_complex_sq_mod(pack<double, 4>::type const &x) {
+        auto a = _mm256_mul_pd(x, x);
+        return _mm256_hadd_pd(a, a);
+    }
+
+    // Moduli (with square root) of complex numbers
+
+    // Moduli of two 32-bit complex numbers in a pack
+    inline pack<float, 4>::type mm_complex_mod(pack<float, 4>::type const &x) {
+        return _mm_sqrt_ps(mm_complex_sq_mod(x));
+    }
+
+    // Moduli of four 32-bit complex numbers in a pack
+    inline pack<float, 8>::type mm_complex_mod(pack<float, 8>::type const &x) {
+        return _mm256_sqrt_ps(mm_complex_sq_mod(x));
+    }
+    
+    // Modulus of one 64-bit complex number in a pack
+    inline pack<double, 2>::type mm_complex_mod(pack<double, 2>::type const &x) {
+        return _mm_sqrt_pd(mm_complex_sq_mod(x));
+    }
+    
+    // Moduli of two 64-bit complex numbers in a pack
+    inline pack<double, 4>::type mm_complex_mod(pack<double, 4>::type const &x) {
+        return _mm256_sqrt_pd(mm_complex_sq_mod(x));
+    }
+
+    // Conjugation of two 32-bit complex numbers
+    inline pack<float, 4>::type mm_complex_conj(pack<float, 4>::type const &x) {
+        return _mm_blend_ps(x, -x, 0b1010);
+    }
+
+    // Conjugation of four 32-bit complex numbers
+    inline pack<float, 8>::type mm_complex_conj(pack<float, 8>::type const &x) {
+        return _mm256_blend_ps(x, -x, 0b10101010);
+    }
+    
+    // Conjugation of two 32-bit complex numbers
+    inline pack<double, 2>::type mm_complex_conj(pack<double, 2>::type const &x) {
+        return _mm_blend_pd(x, -x, 0b10);
+    }
+
+    // Conjugation of four 32-bit complex numbers
+    inline pack<double, 4>::type mm_complex_conj(pack<double, 4>::type const &x) {
+        return _mm256_blend_pd(x, -x, 0b1010);
+    }
+    
+    // Divide x by y, where x and y are each 2 32-bit complex numbers
+    inline pack<float, 4>::type mm_complex_div(pack<float, 4>::type const &x, pack<float, 4>::type const &y) {
+        return _mm_div_ps(mm_complex_mul(x, mm_complex_conj(y)), mm_complex_sq_mod(y));
+    }
+    
+    // Divide x by y, where x and y are each 4 32-bit complex numbers
+    inline pack<float, 8>::type mm_complex_div(pack<float, 8>::type const &x, pack<float, 8>::type const &y) {
+        return _mm256_div_ps(mm_complex_mul(x, mm_complex_conj(y)), mm_complex_sq_mod(y));
+    }
+    
+    // Divide x by y, where x and y are each 1 64-bit complex number
+    inline pack<double, 2>::type mm_complex_div(pack<double, 2>::type const &x, pack<double, 2>::type const &y) {
+        return _mm_div_pd(mm_complex_mul(x, mm_complex_conj(y)), mm_complex_sq_mod(y));
+    }
+    
+    // Divide x by y, where x and y are each 2 64-bit complex numbers
+    inline pack<double, 4>::type mm_complex_div(pack<double, 4>::type const &x, pack<double, 4>::type const &y) {
+        return _mm256_div_pd(mm_complex_mul(x, mm_complex_conj(y)), mm_complex_sq_mod(y));
     }
 
 }

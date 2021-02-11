@@ -21,7 +21,8 @@ namespace FFTE {
     /* Initialize an fft tree given an appropriately sized empty array of 
     * function nodes to hold the information
     */
-    size_t init_fft_tree(biFuncNode* sRoot, const size_t N);
+    template<typename F, int L>
+    size_t init_fft_tree(biFuncNode<F,L>* sRoot, const size_t N);
 
     // Get the number of nodes appropriate for a given length signal, N
     size_t getNumNodes(const size_t N);
@@ -48,7 +49,8 @@ namespace FFTE {
     void printTree(constBiNode<size_t>* root);
 
     // print the nodes of an FFT tree using a pre-order traversal
-    void printTree(biFuncNode* root);
+    template<typename F, int L>
+    void printTree(biFuncNode<F,L>* root);
 
     // Initialize an unsigned integer tree (useful for debugging the tree construction)
     size_t initUintConstBiTree(constBiNode<size_t>* sRoot, const size_t N);

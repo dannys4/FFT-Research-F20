@@ -189,16 +189,17 @@ namespace FFTE {
     /* Initialize an fft tree given an appropriately sized empty array of 
     * function nodes to hold the information
     */
-    size_t init_fft_tree(biFuncNode* sRoot, const size_t N) {
+    template<typename F, int L>
+    size_t init_fft_tree(biFuncNode<F,L>* sRoot, const size_t N) {
         size_t k = 0;
         fft_type type = fptrFactorHelper(N, &k);
         if(type == fft_type::rader) {
             size_t a = primeRoot(N);
             size_t ainv = modPow(a, N-2, N); 
-            *sRoot = biFuncNode(a, ainv);
+            *sRoot = biFuncNode<F,L>(a, ainv);
         }
         else {
-            *sRoot = biFuncNode(type);
+            *sRoot = biFuncNode<F,L>(type);
         }
         sRoot->sz = N;
         if(type == fft_type::discrete ||
@@ -244,7 +245,8 @@ namespace FFTE {
     }
 
     // print the nodes of an FFT tree using a pre-order traversal
-    void printTree(biFuncNode* root) {
+    template<typename F, int L>
+    void printTree(biFuncNode<F,L>* root) {
         std::cout << root->sz;
         if(!(root->left || root->right)) return;
         std::cout << ": (";

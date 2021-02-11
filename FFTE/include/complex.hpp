@@ -1,121 +1,113 @@
 #ifndef FFTE_COMPLEX_HPP
 #define FFTE_COMPLEX_HPP
-/**
- * Code Author: Danny Sharp
- * This file is part of FFTE (Fast Fourier Transform Engine)
- */
-
-#include <immintrin.h>
+#include <type_traits>
 #include <iostream>
-#include <cmath>
+#include "vec_types.hpp"
 
 namespace FFTE {
+    template<typename F, int L, class = typename std::enable_if<std::is_floating_point<F>::value, F>::type>
     class Complex {
-        
-        // A pack of two doubles that will hold the complex number
-        __m128d var;
-        
         public:
+            // One 64-bit Complex-- 2 doubles-- pack<double, 2>::type == _m128d
+            // Two 64-bit Complex-- 4 doubles-- pack<double, 4>::type == _m256d
+            // Two 64-bit Complex-- 4 floats -- pack<float, 4>::type == _m128
+            // Four 64-bit Complex-- 8 floats -- pack<float, 8>::type == _m256
+            explicit Complex(F* const f): var(mm_load<F,L>::load(f)) {}
 
-            // Default complex number constructor
-            Complex() {
-                var = _mm_setzero_pd();
+            explicit Complex(typename pack<F,L>::type v): var(v) {}
+            
+            explicit Complex(F x, F y): var(mm_pair_set<F,L>::set(x, y)) {}
+
+            // Add with another complex number
+            Complex<F,L> operator+(Complex<F,L> const &o) {
+                return Complex(mm_add(var, o.var));
             }
 
-            // Creates a complex number from two doubles
-            Complex(double a, double b) {
-                var = _mm_set_pd(b, a);
+            // Add with another complex number
+            Complex<F,L> operator-(Complex<F,L> const &o) {
+                return Complex(mm_sub(var, o.var));
             }
 
-            // Creates a complex number from a pack
-            Complex(__m128d& v) : var(v) {}
-
-            // Creates a complex number from a pack
-            Complex(__m128d v) : var(v) {}
-
-            // Calculates the sum of two complex numbers
-            Complex operator+(const Complex& y) {
-                return Complex(_mm_add_pd(var, y.var));
+            // Multiply by another complex number
+            Complex<F,L> operator*(Complex<F,L> const &o) {
+                return Complex(mm_complex_mul(var, o.var));
             }
 
-            // Calculates the difference of two complex numbers
-            Complex operator-(const Complex& y) {
-                return Complex(_mm_sub_pd(var, y.var));
+            // Divide by another complex number
+            Complex<F,L> operator/(Complex<F,L> const &o) {
+                return Complex(mm_complex_div(var, o.var));
             }
 
-            // Divides a complex number by a double
-            Complex operator/(const double y) {
-                return Complex(_mm_div_pd(var, _mm_set_pd1(y)));
-            }
-
-            // Divides a complex number by a double and resets this value
-            Complex operator/=(const double y) {
-                var = _mm_div_pd(var, _mm_set_pd1(y));
+            // Add with another complex number
+            Complex<F,L> operator+=(Complex<F,L> const &o) {
+                var = mm_add(var, o.var);
                 return *this;
             }
 
-            // Return the complex conjugate of this double
-            Complex conjugate() {
-                return Complex(_mm_addsub_pd(_mm_setzero_pd(), var));
-            }
-
-            /* 
-            * Performs multiplication for two complex numbers. Equivalent code below:
-            * auto cc = _mm_permute_pd(y.var, 0);
-            * auto ba = _mm_permute_pd(this->var, 1);
-            * auto dd = _mm_permute_pd(y.var, 3);
-            * auto dba = _mm_mul_pd(ba, dd);
-            * auto mult = _mm_fmaddsub_pd(this->var, cc, dba);
-            */
-            Complex operator*(const Complex& y) {
-                return Complex(_mm_fmaddsub_pd(var, _mm_permute_pd(y.var, 0), _mm_mul_pd(_mm_permute_pd(var, 1), _mm_permute_pd(y.var, 3))));
-            }
-
-            // Performs multiplication between this and y then resets this
-            Complex operator*=(const Complex& y) {
-                var = _mm_fmaddsub_pd(var, _mm_permute_pd(y.var, 0), _mm_mul_pd(_mm_permute_pd(var, 1), _mm_permute_pd(y.var, 3)));
+            // Subtract another complex number from this
+            Complex<F,L> operator-=(Complex<F,L> const &o) {
+                var = mm_sub(var, o.var);
                 return *this;
             }
 
-            // Performs multiplication between a double and Complex number
-            Complex operator*(double y) {
-                return Complex(_mm_mul_pd(_mm_set_pd1(y), var));
+            // Multiply by another complex number
+            Complex<F,L> operator*=(Complex<F,L> const &o) {
+                var = mm_complex_mul(var, o.var);
+                return *this;
             }
 
-            // Returns the var member of this class
-            __m128d getVar() const {
+            // Divide by another complex number
+            Complex<F,L> operator/=(Complex<F,L> const &o) {
+                var = mm_complex_div(var, o.var);
+                return *this;
+            }
+
+            // Store the modulus of the complex number in an array of size L/2
+            void modulus(F* dest) {
+                auto res = mm_complex_mod(var);
+                for(int i = 0; i < L/2; i++) {
+                    dest[i] = res[i*2];
+                }
+            }
+
+            // Return the modulus of the complex number in a vector pack
+            typename pack<F,L>::type modulus() {
+                return mm_complex_mod(var);
+            }
+
+            // Conjugate the current complex number
+            Complex<F,L> conjugate() {
+                return Complex(mm_complex_conj(var));
+            }
+
+            // Store the Complex number in an array of length L
+            void get(F* dest) {
+                mm_store<F,L>::store(dest, var);
+            }
+
+            // Return a vector pack representation of this number
+            typename pack<F,L>::type get() const {
                 return var;
             }
 
-            /* 
-            * Gets the modulus of the complex number
-            * NOTE: a dangerous cast is performed here which depends on how AVX2 is
-            * formatted in memory. Could be different per machine, but I doubt it.
-            */
-            double modulus() {
-                auto dp = _mm_dp_pd(var, var, 0xF1);
-                return *((double*) &dp);
-            }
+        private:
+            typename pack<F,L>::type var {};
     };
 
     // Determines how my complex number should be printed to an ostream
-    inline std::ostream& operator<<(std::ostream& os, const Complex& dt){
-        double tmp[2];
-        _mm_storeu_pd(tmp, dt.getVar());
-        if(tmp[1] > 0) os << tmp[0] << " + " << tmp[1] << "i";
-        else os << tmp[0] << " - " << -tmp[1] << "i";
+    template<typename F, int L>
+    inline std::ostream& operator<<(std::ostream& os, const Complex<F,L>& dt){
+        auto var = dt.get();
+        os << "( ";
+        for(int i = 0; i < L; i+=2) {
+            os << var[i];
+            if(var[i+1] < 0) os << " - " << -var[i+1];
+            else os << " + " << var[i+1];
+            if(i+2 < L) os << ", ";
+        }
+        os << " )";
         return os;
     }
-
-    // Define multiplication between double and Complex number
-    inline Complex operator*(double d, Complex c) {
-        return c*d;
-    }
-
-    // Define division of a double by a complex number
-    inline Complex operator/(double d, Complex c) {
-        Complex ret = d * c.conjugate() / c.modulus();
-        return ret;
-    }
 }
-#endif // END FFTE_COMPLEX_HPP
+
+#endif // FFTE_COMPLEX_HPP

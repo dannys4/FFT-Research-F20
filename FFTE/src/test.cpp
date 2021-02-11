@@ -24,14 +24,14 @@ void check_fft(Direction dir) {
 
     const int n = FFT_LENGTH;
     int ell = getNumNodes(n);
-    biFuncNode root[ell];
+    biFuncNode<double, 2> root[ell];
     init_fft_tree(root, n);
 
-    auto in = (Complex*) malloc(n*sizeof(Complex));
-    auto out_new = (Complex*) malloc(n*sizeof(Complex));
-    auto out_comp = (Complex*) malloc(n*sizeof(Complex));
-    auto out_ref = (Complex*) malloc(n*sizeof(Complex));
-    for(int i = 0; i < n; i++) in[i] = Complex(i, 2.*i);
+    auto in = (Complex<double, 2>*) malloc(n*sizeof(Complex<double, 2>));
+    auto out_new = (Complex<double, 2>*) malloc(n*sizeof(Complex<double, 2>));
+    auto out_comp = (Complex<double, 2>*) malloc(n*sizeof(Complex<double, 2>));
+    auto out_ref = (Complex<double, 2>*) malloc(n*sizeof(Complex<double, 2>));
+    for(int i = 0; i < n; i++) in[i] = Complex<double, 2>(i, 2.*i);
 
     reference_composite_FFT(n, in, out_ref, dir);
     root->fptr(in, out_new, 1, 1, root, dir);
@@ -39,8 +39,8 @@ void check_fft(Direction dir) {
     
 #if CHECKSUM_COMP
     std::cout << "Looking at the norm squared of all the errors...\n";
-    double sum = (out_ref[0] - out_new[0]).modulus();
-    for(int i = 1; i < n; i++) sum += (out_ref[i]-out_new[i]).modulus();
+    double sum = (out_ref[0] - out_new[0]).modulus()[0];
+    for(int i = 1; i < n; i++) sum += (out_ref[i]-out_new[i]).modulus()[0];
     std::cout << "Norm squared of Error: " << sum << "\n";
 #endif
 #if ENTRYWISE_COMP
@@ -66,7 +66,7 @@ void check_fft_tree() {
     std::cout << "Checking the output of call graph node sizes against expected output...\n";
     size_t N = 15120;
     size_t ell = getNumNodes(N);
-    biFuncNode root[ell];
+    biFuncNode<double, 2> root[ell];
     init_fft_tree(root, N);
     std::cout << "\t\t";
     printTree(root);
@@ -88,14 +88,14 @@ void time_fft() {
 
     const int n = FFT_LENGTH;
     int ell = getNumNodes(n);
-    biFuncNode root[ell];
+    biFuncNode<double, 2> root[ell];
     init_fft_tree(root, n);
 
-    auto in = (Complex*) malloc(n*sizeof(Complex));
-    auto out_ref = (Complex*) malloc(n*sizeof(Complex));
-    auto out_new = (Complex*) malloc(n*sizeof(Complex));
+    auto in = (Complex<double, 2>*) malloc(n*sizeof(Complex<double, 2>));
+    auto out_ref = (Complex<double, 2>*) malloc(n*sizeof(Complex<double, 2>));
+    auto out_new = (Complex<double, 2>*) malloc(n*sizeof(Complex<double, 2>));
 
-    for(size_t i = 0; i < n; i++) in[i] = Complex(i, 2*i);
+    for(size_t i = 0; i < n; i++) in[i] = Complex<double, 2>(i, 2*i);
     Direction dir = Direction::forward;
 
     int Ntrials = 10;
@@ -109,7 +109,7 @@ void time_fft() {
         root->fptr(in, out_new, 1, 1, root, dir);
         end = clock::now();
         new_fft += duration_cast<nanoseconds>(end-start).count();
-        if(in == (Complex*) 0x12345) std::cout << "this shouldn't print\n";
+        if(in == (Complex<double, 2>*) 0x12345) std::cout << "this shouldn't print\n";
     }
 #if 1
     start = clock::now();
@@ -121,7 +121,7 @@ void time_fft() {
         reference_composite_FFT(n, in, out_new, Direction::forward);
         end = clock::now();
         ref_fft += duration_cast<nanoseconds>(end-start).count();
-        if(in == (Complex*) 0x12345) std::cout << "this shouldn't print\n";
+        if(in == (Complex<double, 2>*) 0x12345) std::cout << "this shouldn't print\n";
     }
     std::cout << "The newest tranform takes " <<
                  (new_fft*1.e-9)/((double) Ntrials) <<
@@ -142,18 +142,18 @@ void test_FFT_into_csv(std::string filename, int maxsize) {
     std::cout << "Timing the current FFT tree configuration against reference...\n";
     std::cout << "Outputting results into " << filename << "\n";
     std::ofstream myfile;
-    Complex *x = (Complex*) malloc(maxsize*sizeof(Complex));
-    Complex *y_new = (Complex*) malloc(maxsize*sizeof(Complex));
-    Complex *y_ctc = (Complex*) malloc(maxsize*sizeof(Complex));
-    Complex *y_dft = (Complex*) malloc(maxsize*sizeof(Complex));
-    for(int i = 0; i < maxsize; i++) x[i] = Complex(rand(),rand());
+    Complex<double, 2> *x = (Complex<double, 2>*) malloc(maxsize*sizeof(Complex<double, 2>));
+    Complex<double, 2> *y_new = (Complex<double, 2>*) malloc(maxsize*sizeof(Complex<double, 2>));
+    Complex<double, 2> *y_ctc = (Complex<double, 2>*) malloc(maxsize*sizeof(Complex<double, 2>));
+    Complex<double, 2> *y_dft = (Complex<double, 2>*) malloc(maxsize*sizeof(Complex<double, 2>));
+    for(int i = 0; i < maxsize; i++) x[i] = Complex<double, 2>(rand(),rand());
 
     myfile.open(filename);
     myfile << "N,FFTE Setup Time(s),FFTE Time (s),Composite FFT Time (s),DFT Time (s),L2 Error\n";
     for(int N = 10; N < maxsize; N++) {
         auto start = clock::now();
         int ell = getNumNodes(N);
-        biFuncNode root[ell];
+        biFuncNode<double, 2> root[ell];
         init_fft_tree(root, N);
         Direction dir = Direction::forward;
         auto end = clock::now();
@@ -176,7 +176,7 @@ void test_FFT_into_csv(std::string filename, int maxsize) {
 
         double err = 0.;
         for(int j = 0; j < N; j++) {
-            err += (y_new[j]-y_dft[j]).modulus();
+            err += (y_new[j]-y_dft[j]).modulus()[0];
         }
 
         myfile << N << "," << setupTime << "," << myTime << "," << compositeTime << "," << dftTime << "," << err << "\n";
@@ -187,25 +187,25 @@ void test_FFT_into_csv(std::string filename, int maxsize) {
 
 // Compares my complex multiplication to std::complex multiplication
 void time_complex_mult() {
-    std::cout << "Comparing the performance of my Complex multiplication vs. std::complex...\n";
+    std::cout << "Comparing the performance of my Complex<double, 2> multiplication vs. std::complex...\n";
     using std::chrono::duration_cast;
     using std::chrono::nanoseconds;
     typedef std::chrono::high_resolution_clock clock;
 
     std::vector<std::complex<double>> stdcomp1 {};
     std::vector<std::complex<double>> stdcomp2 {};
-    std::vector<Complex> mycomp1 {};
-    std::vector<Complex> mycomp2 {};
+    std::vector<Complex<double, 2>> mycomp1 {};
+    std::vector<Complex<double, 2>> mycomp2 {};
     auto rand = std::bind(std::uniform_real_distribution<>{0.0,10.0}, std::default_random_engine{});
     size_t len = 5e6;
     double a,b;
     for(size_t i = 0; i < len; i++) {
         a = rand(); b = rand();
         stdcomp1.push_back(std::complex<double>(a, b));
-        mycomp1.push_back(Complex(a, b));
+        mycomp1.push_back(Complex<double, 2>(a, b));
         a = rand(); b = rand();
         stdcomp2.push_back(std::complex<double>(a, b));
-        mycomp2.push_back(Complex(a, b));
+        mycomp2.push_back(Complex<double, 2>(a, b));
     }
 
     auto start = clock::now();
