@@ -58,7 +58,7 @@ namespace FFTE {
     };
 
     // Function to find the smallest usable factor of f at compile-time.
-    size_t factor(const size_t f) {
+    inline size_t factor(const size_t f) {
         size_t k = 0;
         // Prioritize factors in the factors array
         for(; k < FFTE_FACTORS_LEN; k++) {
@@ -75,7 +75,7 @@ namespace FFTE {
     }
 
     // Find all the factors to test for primitive root
-    std::vector<size_t> findFactorRader(size_t factor) {
+    inline std::vector<size_t> findFactorRader(size_t factor) {
         size_t f = factor;
         std::vector<size_t> ret {};
         if((f % 2) == 0) {
@@ -95,7 +95,7 @@ namespace FFTE {
     }
 
     // Get the power of base
-    size_t modPow(size_t base, size_t pow, size_t mod) {
+    inline size_t modPow(size_t base, size_t pow, size_t mod) {
         size_t ret = 1;
         while(pow > 0) {
             if((pow & 0x1) != 0) {
@@ -108,7 +108,7 @@ namespace FFTE {
     }
 
     // Assume p is prime
-    size_t primeRoot(size_t p) {
+    inline size_t primeRoot(size_t p) {
         size_t phi = p - 1;
         auto f_vec = findFactorRader(phi);
         bool ret = false;
@@ -128,7 +128,7 @@ namespace FFTE {
     }
 
     // Check if n is a power of pow
-    bool power_of(const size_t n, const size_t pow) {
+    inline bool power_of(const size_t n, const size_t pow) {
         size_t k = n;
         if(pow == 2) {
             unsigned char sum = 0x1 & n;
@@ -142,7 +142,7 @@ namespace FFTE {
     // We first check if N is a power of something.
     // Then, we check if it has powers of numbers
     // Then, if that doesn't work, we just factor it.
-    size_t numNodesFactorHelper(const size_t N) {
+    inline size_t numNodesFactorHelper(const size_t N) {
         if(power_of(N, 4) ||
            power_of(N, 2) ||
            power_of(N, 3)) {
@@ -169,14 +169,14 @@ namespace FFTE {
 
     // This is a placeholder for what we need when
     // prime algorithms are introduced
-    size_t getLeftover(const size_t N, const size_t k) {
+    inline size_t getLeftover(const size_t N, const size_t k) {
         return (k == N-1) ? 0 : N/k;
     }
 
     // We first check if N is a power of something.
     // Then, we check if it has powers of numbers
     // Then, if that doesn't work, we just factor it.
-    fft_type fptrFactorHelper(const size_t N, size_t* k) {
+    inline fft_type fptrFactorHelper(const size_t N, size_t* k) {
         if(power_of(N, 4)) {
             *k = N;
             return fft_type::pow4;
@@ -222,7 +222,7 @@ namespace FFTE {
     * function nodes to hold the information
     */
     template<typename F, int L>
-    size_t init_fft_tree(biFuncNode<F,L>* sRoot, const size_t N) {
+    inline size_t init_fft_tree(biFuncNode<F,L>* sRoot, const size_t N) {
         size_t k = 0;
         fft_type type = fptrFactorHelper(N, &k);
         if(type == fft_type::rader) {
@@ -249,7 +249,7 @@ namespace FFTE {
     }
 
     // Get the number of nodes appropriate for a given length signal, N
-    size_t getNumNodes(const size_t N) {
+    inline size_t getNumNodes(const size_t N) {
         size_t k = numNodesFactorHelper(N);
         size_t rem = getLeftover(N, k);
         if(k == N) return 1;
@@ -259,14 +259,14 @@ namespace FFTE {
     }
 
     // Print the nodes of a size_t tree as they're stored in the length N array root
-    void printRoot(constBiNode<size_t>* root, size_t N) {
+    inline void printRoot(constBiNode<size_t>* root, size_t N) {
         std::cout << "root[" << N << "] = ";
         for(size_t i = 0; i < N; i++) std::cout << root[i].elem << ", ";
         std::cout << "\n";
     }
 
     // Print the nodes using a pre-order traversal
-    void printTree(constBiNode<size_t>* root) {
+    inline void printTree(constBiNode<size_t>* root) {
         std::cout << root->elem;
         if(!(root->left || root->right)) return;
         std::cout << ": (";
@@ -278,7 +278,7 @@ namespace FFTE {
 
     // print the nodes of an FFT tree using a pre-order traversal
     template<typename F, int L>
-    void printTree(biFuncNode<F,L>* root) {
+    inline void printTree(biFuncNode<F,L>* root) {
         std::cout << root->sz;
         if(!(root->left || root->right)) return;
         std::cout << ": (";
@@ -289,7 +289,7 @@ namespace FFTE {
     }
 
     // Initialize an unsigned integer tree (useful for debugging the tree construction)
-    size_t initUintConstBiTree(constBiNode<size_t>* sRoot, const size_t N) {
+    inline size_t initUintConstBiTree(constBiNode<size_t>* sRoot, const size_t N) {
         size_t k = numNodesFactorHelper(N);
         (*sRoot).elem = N;
         if (k == N) return 1;

@@ -1,4 +1,3 @@
-
 /**
  * Code Author: Danny Sharp
  * This file is part of FFTE (Fast Fourier Transform Engine)
@@ -34,7 +33,7 @@ namespace FFTE {
 
     // Recursive helper function implementing a classic C-T FFT
 	template<typename F, int L>
-	void pow2_FFT_helper(size_t N, Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, Direction dir) {
+	inline void pow2_FFT_helper(size_t N, Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, Direction dir) {
         
         // Trivial case
         if(N == 1) {
@@ -67,14 +66,14 @@ namespace FFTE {
 
     // External function to call the C-T radix-2 FFT
 	template<typename F, int L>
-	void pow2_FFT(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sRoot, Direction dir) {
+	inline void pow2_FFT(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sRoot, Direction dir) {
         const size_t N = sRoot->sz; // Size of problem
         pow2_FFT_helper(N, x, y, s_in, s_out, dir); // Call the radix-2 FFT
     }
 
     // Internal helper function to perform a DFT
 	template<typename F, int L>
-	void DFT_helper(size_t size, Complex<F,L>* sig_in, Complex<F,L>* sig_out, size_t s_in, size_t s_out, Direction dir) {
+	inline void DFT_helper(size_t size, Complex<F,L>* sig_in, Complex<F,L>* sig_out, size_t s_in, size_t s_out, Direction dir) {
         // Twiddle with smallest numerator
         Complex<F,L> w0 = omega<F,L>::get(1, size, dir);
 
@@ -111,19 +110,19 @@ namespace FFTE {
 
     // External-facing function to properly call the internal DFT function
 	template<typename F, int L>
-	void DFT(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sLeaf, Direction dir) {
+	inline void DFT(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sLeaf, Direction dir) {
         DFT_helper(sLeaf->sz, x, y, s_in, s_out, dir);
     }
 
     // External-facing reference DFT for testing purposes
 	template<typename F, int L>
-	void reference_DFT(size_t N, Complex<F,L>* x, Complex<F,L>* y, Direction dir) {
+	inline void reference_DFT(size_t N, Complex<F,L>* x, Complex<F,L>* y, Direction dir) {
         DFT_helper(N, x, y, 1, 1, dir);
     }
 
     // External & Internal function for radix-N1 C-T FFTs
 	template<typename F, int L>
-	void composite_FFT(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sRoot, Direction dir) {
+	inline void composite_FFT(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sRoot, Direction dir) {
         // Retrieve N
         size_t N = sRoot->sz;
 
@@ -173,7 +172,7 @@ namespace FFTE {
     }
 
     // A factoring function for the reference composite FFT
-    size_t referenceFactor(const size_t f) {
+    inline size_t referenceFactor(const size_t f) {
         // Check if it's even
         if((f & 0x1) == 0) return 2;
 
@@ -188,7 +187,7 @@ namespace FFTE {
 
     // Implementation for Rader's Algorithm
 	template<typename F, int L>
-	void rader_FFT(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sRoot, Direction dir, size_t a, size_t ainv) {
+	inline void rader_FFT(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sRoot, Direction dir, size_t a, size_t ainv) {
         // Size of the problem
         size_t p = sRoot->sz;
         
@@ -242,7 +241,7 @@ namespace FFTE {
     // Internal-facing radix-N1 C-T FFT for reference. Doesn't use any call graph.
     // Used for checking correctness of output
 	template<typename F, int L>
-	void reference_composite_FFT_helper(size_t N, Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, Direction dir) {
+	inline void reference_composite_FFT_helper(size_t N, Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, Direction dir) {
         
         // Find the factors of N
         size_t N1 = referenceFactor(N);
@@ -278,13 +277,13 @@ namespace FFTE {
 
     // External-facing function to calculate a composite FFT using the reference code.
 	template<typename F, int L>
-	void reference_composite_FFT(size_t N, Complex<F,L>* x, Complex<F,L>* y, Direction dir) {
+	inline void reference_composite_FFT(size_t N, Complex<F,L>* x, Complex<F,L>* y, Direction dir) {
         reference_composite_FFT_helper(N, x, y, 1, 1, dir);
     }
 
     // Internal recursive helper-function that calculates the FFT of a signal with length 3^k
 	template<typename F, int L>
-	void pow3_FFT_helper(size_t N, Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, Direction dir, Complex<F,L>& plus120, Complex<F,L>& minus120) {
+	inline void pow3_FFT_helper(size_t N, Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, Direction dir, Complex<F,L>& plus120, Complex<F,L>& minus120) {
         
         // Calculate the DFT manually if necessary
         if(N == 3) {
@@ -330,7 +329,7 @@ namespace FFTE {
 
     // External-facing function for performing an FFT on signal with length N = 3^k
 	template<typename F, int L>
-	void pow3_FFT(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sRoot, Direction dir) {
+	inline void pow3_FFT(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sRoot, Direction dir) {
         const size_t N = sRoot->sz;
         Complex<F,L> plus120 {-0.5, -sqrt(3)/2.};
         Complex<F,L> minus120 {-0.5, sqrt(3)/2.};

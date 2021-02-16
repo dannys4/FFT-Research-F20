@@ -29,23 +29,27 @@ namespace FFTE {
     };
 
     template<typename F, int L>
-    void pow2_FFT(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sRoot, Direction dir);
+    inline void pow2_FFT(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sRoot, Direction dir);
 
     template<typename F, int L>
-    void DFT(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sLeaf, Direction dir);
+    inline void DFT(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sLeaf, Direction dir);
+    
     template<typename F, int L>
-    void reference_DFT(size_t N, Complex<F,L>* x, Complex<F,L>* y, Direction dir);
+    inline void reference_DFT(size_t N, Complex<F,L>* x, Complex<F,L>* y, Direction dir);
+
 
     template<typename F, int L>
-    void composite_FFT(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sRoot, Direction dir);
-    template<typename F, int L>
-    void reference_composite_FFT(size_t N, Complex<F,L>* x, Complex<F,L>* y, Direction dir);
+    inline void composite_FFT(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sRoot, Direction dir);
 
     template<typename F, int L>
-    void pow3_FFT(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sRoot, Direction dir);
+    inline void reference_composite_FFT(size_t N, Complex<F,L>* x, Complex<F,L>* y, Direction dir);
+
 
     template<typename F, int L>
-    void rader_FFT(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sRoot, Direction dir, size_t a, size_t ainv);
+    inline void pow3_FFT(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sRoot, Direction dir);
+
+    template<typename F, int L>
+    inline void rader_FFT(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sRoot, Direction dir, size_t a, size_t ainv);
 
     enum fft_type {pow2, pow3, pow4, composite, discrete, rader};
 
