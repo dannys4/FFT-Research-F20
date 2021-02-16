@@ -130,4 +130,6 @@ namespace FFTE {
     };
 #endif // END DECISIONS BASED ON WHETHER C++14+
 }
+
+#include "algos_imp.hpp"
 #endif // END FFTE_ALGOS_HPP

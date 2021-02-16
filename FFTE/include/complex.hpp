@@ -5,7 +5,12 @@
 #include "vec_types.hpp"
 
 namespace FFTE {
-    template<typename F, int L, class = typename std::enable_if<std::is_floating_point<F>::value, F>::type>
+    template<typename F, class = typename std::enable_if<std::is_floating_point<F>::value, F>::type>
+    class Twiddle {
+        F re; F im;
+    };
+
+    template<typename F, int L>
     class Complex {
         public:
             // One 64-bit Complex-- 2 doubles-- pack<double, 2>::type == _m128d
@@ -18,24 +23,77 @@ namespace FFTE {
             
             explicit Complex(F x, F y): var(mm_pair_set<F,L>::set(x, y)) {}
 
-            // Add with another complex number
+            ///////////////////////////////////////////////////////////
+            /* Basic operations with another pack of complex numbers */
+            ///////////////////////////////////////////////////////////
+
+            // Add with another pack of complex number
             Complex<F,L> operator+(Complex<F,L> const &o) {
                 return Complex(mm_add(var, o.var));
             }
 
-            // Add with another complex number
+            // Subtract another pack of complex number
             Complex<F,L> operator-(Complex<F,L> const &o) {
                 return Complex(mm_sub(var, o.var));
             }
 
-            // Multiply by another complex number
-            Complex<F,L> operator*(Complex<F,L> const &o) {
+            // Multiply by another pack of complex number
+            Complex<F,L> operator*(Complex<F,L> const & o) {
                 return Complex(mm_complex_mul(var, o.var));
             }
 
-            // Divide by another complex number
-            Complex<F,L> operator/(Complex<F,L> const &o) {
+            // Divide by another pack of complex number
+            Complex<F,L> operator/(Complex<F,L> const & o) {
                 return Complex(mm_complex_div(var, o.var));
+            }
+
+            ///////////////////////////////////////////////////
+            /* Basic operations with a single complex number */
+            ///////////////////////////////////////////////////
+
+            // Add with another pack of complex number
+            Complex<F,L> operator+(Twiddle<F> const &o) {
+                return Complex(mm_add(var, mm_pair_set<F, L>::set(o.re, o.im)));
+            }
+
+            // Subtract another pack of complex number
+            Complex<F,L> operator-(Twiddle<F> const &o) {
+                return Complex(mm_sub(var, mm_pair_set<F, L>::set(o.re, o.im)));
+            }
+
+            // Multiply by another pack of complex number
+            Complex<F,L> operator*(Twiddle<F> const & o) {
+                return Complex(mm_complex_mul(var, mm_pair_set<F, L>::set(o.re, o.im)));
+            }
+
+            // Divide by another pack of complex number
+            Complex<F,L> operator/(Twiddle<F> const & o) {
+                return Complex(mm_complex_div(var, mm_pair_set<F, L>::set(o.re, o.im)));
+            }
+
+
+            ///////////////////////////////////////////////////////////////
+            /* Basic operations with a single real floating point number */
+            ///////////////////////////////////////////////////////////////
+
+            // Add with a floating point number
+            Complex<F,L> operator+(F o) {
+                return Complex(mm_add(var, mm_set1<F,L>::set(o)));
+            }
+
+            // Subtract a floating point number
+            Complex<F,L> operator-(F o) {
+                return Complex(mm_sub(var, mm_set1<F,L>::set(o)));
+            }
+
+            // Multiply by a floating point number
+            Complex<F,L> operator*(F o) {
+                return Complex(mm_mul(var, mm_set1<F,L>::set(o)));
+            }
+
+            // Divide by a floating point number
+            Complex<F,L> operator/(F o) {
+                return Complex(mm_div(var, mm_set1<F,L>::set(o)));
             }
 
             // Add with another complex number

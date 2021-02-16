@@ -67,12 +67,19 @@ namespace FFTE {
     template<> struct pack<double, 4> { typedef __m256d type; };
     template<> struct pack<float, 8> { typedef __m256 type; };
 
+
+    // Some simple operations that will be useful for vectorized types.
+    // These cannot be in partially specialized template functions because
+    // the only thing that changes in the function is the return type.
+
     template<typename F, int L> struct mm_zero {};
     template<typename F, int L> struct mm_load {};
     template<typename F, int L> struct mm_store {};
     template<typename F, int L> struct mm_pair_set{};
+    template<typename F, int L> struct mm_set1{};
 
-    // Some simple operations that will be useful for vectorized types
+    /* Specializations for singular type */
+
     template<typename T>
     struct mm_zero<T, 1> {
         static inline T get(){return static_cast<T>(0);}
@@ -86,6 +93,11 @@ namespace FFTE {
     template<typename T>
     struct mm_store<T, 1> {
         static inline void store(T const *dest, T const &src) { dest[0] = src; }
+    };
+
+    template<typename T>
+    struct mm_set1<T,1> {
+        static inline T set(T src) { return src; }
     };
 
     // Real basic arithmetic for the "none" case
@@ -111,6 +123,10 @@ namespace FFTE {
         return {r, r};
     }
 
+    //////////////////////////////////////////
+    /* Below are structs for pack<float, 4> */
+    //////////////////////////////////////////
+
     // Setting the zero if there are two pairs of single precision complex numbers
     template<>
     struct mm_zero<float, 4> {
@@ -134,6 +150,16 @@ namespace FFTE {
     struct mm_pair_set<float, 4> {
         static inline pack<float, 4>::type set(float x, float y) { return _mm_setr_ps(x, y, x, y); }
     };
+
+    // Set a vectorized type as a repeated float
+    template<>
+    struct mm_set1<float,4> {
+        static inline pack<float, 4>::type set(float x) { return _mm_set1_ps(x); }
+    };
+
+    //////////////////////////////////////////
+    /* Below are structs for pack<float, 8> */
+    //////////////////////////////////////////
 
     // Setting the zero if there are four pairs of single precision complex numbers
     template<>
@@ -159,6 +185,16 @@ namespace FFTE {
         static inline pack<float, 8>::type set(float x, float y) { return _mm256_setr_ps(x, y, x, y, x, y, x, y); }
     };
 
+    // Set a vectorized type as a repeated float
+    template<>
+    struct mm_set1<float,8> {
+        static inline pack<float, 8>::type set(float x) { return _mm256_set1_ps(x); }
+    };
+
+    ///////////////////////////////////////////
+    /* Below are structs for pack<double, 2> */
+    ///////////////////////////////////////////
+
     // Setting the zero if there is one pair of double precision complex numbers
     template<>
     struct mm_zero<double, 2> {
@@ -182,6 +218,16 @@ namespace FFTE {
     struct mm_pair_set<double, 2> {
         static inline pack<double, 2>::type set(double x, double y) { return _mm_setr_pd(x, y); }
     };
+
+    // Set a vectorized type as a repeated double
+    template<>
+    struct mm_set1<double, 2> {
+        static inline pack<double, 2>::type set(double x) { return _mm_set1_pd(x); }
+    };
+
+    ///////////////////////////////////////////
+    /* Below are structs for pack<double, 4> */
+    ///////////////////////////////////////////
 
     // Setting the zero if there is one pair of double precision complex numbers
     template<>
@@ -207,9 +253,112 @@ namespace FFTE {
         static inline pack<double, 4>::type set(double x, double y) { return _mm256_setr_pd(x, y, x, y); }
     };
 
-    // Complex multiplication using vector packs
+    // Set a vectorized type as a repeated float
+    template<>
+    struct mm_set1<double, 4> {
+        static inline pack<double, 4>::type set(double x) { return _mm256_set1_pd(x); }
+    };
+
+    ///////////////////////////////////////////////////
+    /* Elementary binary operations for vector packs */
+    ///////////////////////////////////////////////////
+
+    /* Addition */
+
+    // Perform addition on vectorized packs of four floats
+    inline pack<float, 4>::type mm_add(pack<float, 4>::type const &x,pack<float, 4>::type const &y) {
+        return _mm_add_ps(x, y);
+    }
+
+    // Perform addition on vectorized packs of eight floats
+    inline pack<float, 8>::type mm_add(pack<float, 8>::type const &x, pack<float, 8>::type const &y) {
+        return _mm256_add_ps(x, y);
+    }
+
+    // Perform addition on vectorized packs of two doubles
+    inline pack<double, 2>::type mm_add(pack<double, 2>::type const &x, pack<double, 2>::type const &y) {
+        return _mm_add_pd(x, y);
+    }
+
+    // Perform addition on vectorized packs of four doubles
+    inline pack<double, 4>::type mm_add(pack<double, 4>::type const &x, pack<double, 4>::type const &y) {
+        return _mm256_add_pd(x, y);
+    }
+
+    /* Subtraction */
+
+    // Perform subtraction on vectorized packs of four floats
+    inline pack<float, 4>::type mm_sub(pack<float, 4>::type const &x,pack<float, 4>::type const &y) {
+        return _mm_sub_ps(x, y);
+    }
+
+    // Perform subtraction on vectorized packs of eight floats
+    inline pack<float, 8>::type mm_sub(pack<float, 8>::type const &x, pack<float, 8>::type const &y) {
+        return _mm256_sub_ps(x, y);
+    }
+
+    // Perform subtraction on vectorized packs of two doubles
+    inline pack<double, 2>::type mm_sub(pack<double, 2>::type const &x, pack<double, 2>::type const &y) {
+        return _mm_sub_pd(x, y);
+    }
+
+    // Perform subtraction on vectorized packs of four doubles
+    inline pack<double, 4>::type mm_sub(pack<double, 4>::type const &x, pack<double, 4>::type const &y) {
+        return _mm256_sub_pd(x, y);
+    }
+
+    /* Multiplication */
+
+    // Perform multiplication on vectorized packs of four floats
+    inline pack<float, 4>::type mm_mul(pack<float, 4>::type const &x, pack<float, 4>::type const &y) {
+        return _mm_mul_ps(x, y);
+    }
+
+    // Perform multiplication on vectorized packs of eight floats
+    inline pack<float, 8>::type mm_mul(pack<float, 8>::type const &x, pack<float, 8>::type const &y) {
+        return _mm256_mul_ps(x, y);
+    }
+
+    // Perform multiplication on vectorized packs of two doubles
+    inline pack<double, 2>::type mm_mul(pack<double, 2>::type const &x, pack<double, 2>::type const &y) {
+        return _mm_mul_pd(x, y);
+    }
+
+    // Perform multiplication on vectorized packs of four doubles
+    inline pack<double, 4>::type mm_mul(pack<double, 4>::type const &x, pack<double, 4>::type const &y) {
+        return _mm256_mul_pd(x, y);
+    }
+
+    /* Division */
+
+    // Perform division on vectorized packs of four floats
+    inline pack<float, 4>::type mm_div(pack<float, 4>::type const &x,pack<float, 4>::type const &y) {
+        return _mm_mul_ps(x, y);
+    }
+
+    // Perform division on vectorized packs of eight floats
+    inline pack<float, 8>::type mm_div(pack<float, 8>::type const &x, pack<float, 8>::type const &y) {
+        return _mm256_div_ps(x, y);
+    }
+
+    // Perform division on vectorized packs of two doubles
+    inline pack<double, 2>::type mm_div(pack<double, 2>::type const &x, pack<double, 2>::type const &y) {
+        return _mm_div_pd(x, y);
+    }
+
+    // Perform division on vectorized packs of four doubles
+    inline pack<double, 4>::type mm_div(pack<double, 4>::type const &x, pack<double, 4>::type const &y) {
+        return _mm256_div_pd(x, y);
+    }
+
     
-    // Two pairs of floats
+    ///////////////////////////////////////////
+    /* Complex operations using vector packs */
+    ///////////////////////////////////////////
+    
+    // Complex Multiplication
+
+    // Complex multiply two pairs of floats
     inline pack<float, 4>::type mm_complex_mul(pack<float, 4>::type const &x, pack<float, 4>::type const &y) {
         auto cc = _mm_permute_ps(y, 0b10100000);
         auto ba = _mm_permute_ps(x, 0b10110001);
@@ -219,7 +368,7 @@ namespace FFTE {
         return mult;
     }
 
-    // Four pairs of floats
+    // Complex multiply four pairs of floats
     inline pack<float, 8>::type mm_complex_mul(pack<float, 8>::type const &x, pack<float, 8>::type const &y) {
         auto cc = _mm256_permute_ps(y, 0b10100000);
         auto ba = _mm256_permute_ps(x, 0b10110001);
@@ -229,7 +378,7 @@ namespace FFTE {
         return mult;
     }
     
-    // Pair of doubles
+    // Complex multiply one pair of doubles
     inline pack<double, 2>::type mm_complex_mul(pack<double, 2>::type const &x, pack<double, 2>::type const &y) {
         auto cc = _mm_permute_pd(y, 0);
         auto ba = _mm_permute_pd(x, 0b01);
@@ -239,7 +388,7 @@ namespace FFTE {
         return mult;
     }
     
-    // Two pairs of doubles
+    // Complex multiply two pairs of doubles
     inline pack<double, 4>::type mm_complex_mul(pack<double, 4>::type const &x, pack<double, 4>::type const &y) {
         auto cc = _mm256_permute_pd(y, 0b0000);
         auto ba = _mm256_permute_pd(x, 0b0101);
@@ -248,51 +397,7 @@ namespace FFTE {
         auto mult = _mm256_fmaddsub_pd(x, cc, dba);
         return mult;
     }
-
-    // Addition using vector packs
-
-    // Four floats
-    inline pack<float, 4>::type mm_add(pack<float, 4>::type const &x,pack<float, 4>::type const &y) {
-        return _mm_add_ps(x, y);
-    }
-
-    // Eight floats
-    inline pack<float, 8>::type mm_add(pack<float, 8>::type const &x, pack<float, 8>::type const &y) {
-        return _mm256_add_ps(x, y);
-    }
-
-    // Two doubles
-    inline pack<double, 2>::type mm_add(pack<double, 2>::type const &x, pack<double, 2>::type const &y) {
-        return _mm_add_pd(x, y);
-    }
-
-    // Four doubles
-    inline pack<double, 4>::type mm_add(pack<double, 4>::type const &x, pack<double, 4>::type const &y) {
-        return _mm256_add_pd(x, y);
-    }
-
-    // Subtraction using vector packs
-
-    // Four floats
-    inline pack<float, 4>::type mm_sub(pack<float, 4>::type const &x,pack<float, 4>::type const &y) {
-        return _mm_sub_ps(x, y);
-    }
-
-    // Eight floats
-    inline pack<float, 8>::type mm_sub(pack<float, 8>::type const &x, pack<float, 8>::type const &y) {
-        return _mm256_sub_ps(x, y);
-    }
-
-    // Two doubles
-    inline pack<double, 2>::type mm_sub(pack<double, 2>::type const &x, pack<double, 2>::type const &y) {
-        return _mm_sub_pd(x, y);
-    }
-
-    // Four doubles
-    inline pack<double, 4>::type mm_sub(pack<double, 4>::type const &x, pack<double, 4>::type const &y) {
-        return _mm256_sub_pd(x, y);
-    }
-
+    
     // Squared modulus of the complex numbers in a pack
 
     // Squared modulus of two 32-bit complex numbers in a pack
@@ -358,6 +463,8 @@ namespace FFTE {
         return _mm256_blend_pd(x, -x, 0b1010);
     }
     
+    // Complex division
+
     // Divide x by y, where x and y are each 2 32-bit complex numbers
     inline pack<float, 4>::type mm_complex_div(pack<float, 4>::type const &x, pack<float, 4>::type const &y) {
         return _mm_div_ps(mm_complex_mul(x, mm_complex_conj(y)), mm_complex_sq_mod(y));

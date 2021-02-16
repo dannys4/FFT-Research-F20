@@ -2,7 +2,7 @@
  * Code Author: Danny Sharp
  * This file is part of FFTE (Fast Fourier Transform Engine)
  */
-
+# if 0
 #include "test.hpp"
 #define CHECKSUM_COMP 1
 #define ENTRYWISE_COMP 0
@@ -270,3 +270,4 @@ void time_const_tree() {
     std::cout << "Done timing tree construction performance!\n\n";
 }
 
+#endif
