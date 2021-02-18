@@ -5,11 +5,6 @@
 #include "vec_types.hpp"
 
 namespace FFTE {
-    template<typename F, class = typename std::enable_if<std::is_floating_point<F>::value, F>::type>
-    class Twiddle {
-        F re; F im;
-    };
-
     template<typename F, int L>
     class Complex {
         public:
@@ -68,54 +63,6 @@ namespace FFTE {
             // Divide by another complex number
             Complex<F,L> operator/=(Complex<F,L> const &o) {
                 var = mm_complex_div(var, o.var);
-                return *this;
-            }
-
-            ///////////////////////////////////////////////////
-            /* Basic operations with a single complex number */
-            ///////////////////////////////////////////////////
-
-            // Add with another pack of complex number
-            Complex<F,L> operator+(Twiddle<F> const &o) {
-                return Complex(mm_add(var, mm_pair_set<F, L>::set(o.re, o.im)));
-            }
-
-            // Subtract another pack of complex number
-            Complex<F,L> operator-(Twiddle<F> const &o) {
-                return Complex(mm_sub(var, mm_pair_set<F, L>::set(o.re, o.im)));
-            }
-
-            // Multiply by another pack of complex number
-            Complex<F,L> operator*(Twiddle<F> const & o) {
-                return Complex(mm_complex_mul(var, mm_pair_set<F, L>::set(o.re, o.im)));
-            }
-
-            // Divide by another pack of complex number
-            Complex<F,L> operator/(Twiddle<F> const & o) {
-                return Complex(mm_complex_div(var, mm_pair_set<F, L>::set(o.re, o.im)));
-            }
-
-            // Add with another pack of complex number
-            Complex<F,L> operator+=(Twiddle<F> const &o) {
-                var = mm_add(var, mm_pair_set<F, L>::set(o.re, o.im));
-                return *this;
-            }
-
-            // Subtract another pack of complex number
-            Complex<F,L> operator-=(Twiddle<F> const &o) {
-                var = mm_sub(var, mm_pair_set<F, L>::set(o.re, o.im));
-                return *this;
-            }
-
-            // Multiply by another pack of complex number
-            Complex<F,L> operator*=(Twiddle<F> const & o) {
-                var = mm_complex_mul(var, mm_pair_set<F, L>::set(o.re, o.im));
-                return *this;
-            }
-
-            // Divide by another pack of complex number
-            Complex<F,L> operator/=(Twiddle<F> const & o) {
-                var = mm_complex_div(var, mm_pair_set<F, L>::set(o.re, o.im));
                 return *this;
             }
 

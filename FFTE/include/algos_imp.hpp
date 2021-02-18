@@ -2,7 +2,7 @@
  * Code Author: Danny Sharp
  * This file is part of FFTE (Fast Fourier Transform Engine)
  */
-
+#include <iostream>
 namespace FFTE {
 
     // Recursive helper function implementing a classic C-T FFT
