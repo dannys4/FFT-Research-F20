@@ -4,9 +4,9 @@
  */
 
 #include "test.hpp"
-#define CHECKSUM_COMP 0
-#define ENTRYWISE_COMP 1
-#define FFT_LENGTH 6
+#define CHECKSUM_COMP 1
+#define ENTRYWISE_COMP 0
+#define FFT_LENGTH 32
 
 /*
  * Functions to test veracity of outputs. These check against references
@@ -74,10 +74,12 @@ void check_fft_multidim(Direction dir) {
     biFuncNode<double, 4> root[ell];
     init_fft_tree(root, n);
 
-    auto in = (Complex<double, 4>*) aligned_alloc(32, n*sizeof(Complex<double, 4>));
-    auto out_new = (Complex<double, 4>*) aligned_alloc(32, n*sizeof(Complex<double, 4>));
-    auto out_comp = (Complex<double, 4>*) aligned_alloc(32, n*sizeof(Complex<double, 4>));
-    auto out_ref = (Complex<double, 4>*) aligned_alloc(32, n*sizeof(Complex<double, 4>));
+    auto al = sizeof(Complex<double, 4>);
+
+    auto in = (Complex<double, 4>*) aligned_alloc(al, n*sizeof(Complex<double, 4>));
+    auto out_new = (Complex<double, 4>*) aligned_alloc(al, n*sizeof(Complex<double, 4>));
+    auto out_comp = (Complex<double, 4>*) aligned_alloc(al, n*sizeof(Complex<double, 4>));
+    auto out_ref = (Complex<double, 4>*) aligned_alloc(al, n*sizeof(Complex<double, 4>));
     double tmp_arr[4] = {0., 0., 0., 0.};
     for(int i = 0; i < n; i++) {
         in[i] = Complex<double, 4> (tmp_arr);
