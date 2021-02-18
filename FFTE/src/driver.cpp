@@ -8,5 +8,5 @@
 using namespace FFTE;
 // Main function. Used for calling different parts of the testing code
 int main() {
-    check_fft(FFTE::Direction::forward);
+    check_fft_multidim(Direction::forward);
 }

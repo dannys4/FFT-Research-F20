@@ -4,9 +4,9 @@
  */
 
 #include "test.hpp"
-#define CHECKSUM_COMP 1
-#define ENTRYWISE_COMP 0
-#define FFT_LENGTH 19*27*5*7*11
+#define CHECKSUM_COMP 0
+#define ENTRYWISE_COMP 1
+#define FFT_LENGTH 5
 
 /*
  * Functions to test veracity of outputs. These check against references
@@ -52,7 +52,66 @@ void check_fft(Direction dir) {
             }
             std::cout << "out_ref[" << i << "] = " << out_ref[i]  <<
                        ", out_new[" << i << "] = " << out_new[i]  <<
-                       ", Err = " << (out_ref[i] - out_new[i]).modulus() << "\n";
+                       ", Err = " << (out_ref[i] - out_new[i]).modulus()[0] << "\n";
+    }
+#endif
+    free(in); free(out_comp); free(out_ref); free(out_new);
+    switch(dir) {
+        case Direction::forward: std::cout << "Done checking the FFT! \n\n";  break;
+        case Direction::inverse: std::cout << "Done checking the IFFT!\n\n"; break;
+    }
+}
+
+// Checks how correct the forward Fourier transforms are
+void check_fft_multidim(Direction dir) {
+    switch(dir) {
+        case Direction::forward: std::cout << "Checking the correctness of the multidimensional FFT against the comparison... \n"; break;
+        case Direction::inverse: std::cout << "Checking the correctness of the multidimensional IFFT against the comparison...\n"; break;
+    }
+
+    const int n = FFT_LENGTH;
+    int ell = getNumNodes(n);
+    biFuncNode<double, 4> root[ell];
+    init_fft_tree(root, n);
+
+    auto in = (Complex<double, 4>*) malloc(n*sizeof(Complex<double, 4>));
+    auto out_new = (Complex<double, 4>*) malloc(n*sizeof(Complex<double, 4>));
+    auto out_comp = (Complex<double, 4>*) malloc(n*sizeof(Complex<double, 4>));
+    auto out_ref = (Complex<double, 4>*) malloc(n*sizeof(Complex<double, 4>));
+    double tmp_arr[4] = {0., 0., 0., 0.};
+    for(int i = 0; i < n; i++) {
+        in[i] = Complex<double, 4> (tmp_arr);
+        tmp_arr[0] += 1; tmp_arr[1] += 2;
+        tmp_arr[2] += 3; tmp_arr[3] += 4;
+    }
+
+    reference_composite_FFT(n, in, out_ref, dir);
+    root->fptr(in, out_new, 1, 1, root, dir);
+
+    
+#if CHECKSUM_COMP
+    std::cout << "Looking at the norm squared of all the errors...\n";
+    auto tmp = (out_ref[0] - out_new[0]).modulus();
+    double sum1 = tmp[0];
+    double sum2 = tmp[2];
+    for(int i = 1; i < n; i++) {
+        tmp = (out_ref[i] - out_new[i]).modulus();
+        sum1 += tmp[0];
+        sum2 += tmp[2];
+    }
+    std::cout << "Norm squared of Error: (" << sum1 << ", " << sum2 << ")\n";
+#endif
+#if ENTRYWISE_COMP
+    std::cout << "Comparing the values at each entry...\n";
+    for(int i = 0; i < n; i++) {
+            if(dir == Direction::inverse) {
+                out_ref[i] /= (double) n;
+                out_new[i] /= (double) n;
+            }
+            auto tmp = (out_ref[i] - out_new[i]).modulus();
+            std::cout << "out_ref[" << i << "] = " << out_ref[i]  <<
+                       ", out_new[" << i << "] = " << out_new[i]  <<
+                       ", Err = (" << tmp[0] << ", " << tmp[1] << ")\n";
     }
 #endif
     free(in); free(out_comp); free(out_ref); free(out_new);

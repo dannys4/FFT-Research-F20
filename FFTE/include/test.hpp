@@ -21,6 +21,9 @@
 // Check the error in the FFT in each direction
 void check_fft(FFTE::Direction dir);
 
+// Check the error in the FFT for multiple simultaneous packed transforms
+void check_fft_multidim(FFTE::Direction dir);
+
 // Check the way that the FFT branches
 void check_fft_tree();
 

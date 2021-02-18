@@ -47,6 +47,30 @@ namespace FFTE {
                 return Complex(mm_complex_div(var, o.var));
             }
 
+            // Add with another complex number
+            Complex<F,L> operator+=(Complex<F,L> const &o) {
+                var = mm_add(var, o.var);
+                return *this;
+            }
+
+            // Subtract another complex number from this
+            Complex<F,L> operator-=(Complex<F,L> const &o) {
+                var = mm_sub(var, o.var);
+                return *this;
+            }
+
+            // Multiply by another complex number
+            Complex<F,L> operator*=(Complex<F,L> const &o) {
+                var = mm_complex_mul(var, o.var);
+                return *this;
+            }
+
+            // Divide by another complex number
+            Complex<F,L> operator/=(Complex<F,L> const &o) {
+                var = mm_complex_div(var, o.var);
+                return *this;
+            }
+
             ///////////////////////////////////////////////////
             /* Basic operations with a single complex number */
             ///////////////////////////////////////////////////
@@ -71,6 +95,29 @@ namespace FFTE {
                 return Complex(mm_complex_div(var, mm_pair_set<F, L>::set(o.re, o.im)));
             }
 
+            // Add with another pack of complex number
+            Complex<F,L> operator+=(Twiddle<F> const &o) {
+                var = mm_add(var, mm_pair_set<F, L>::set(o.re, o.im));
+                return *this;
+            }
+
+            // Subtract another pack of complex number
+            Complex<F,L> operator-=(Twiddle<F> const &o) {
+                var = mm_sub(var, mm_pair_set<F, L>::set(o.re, o.im));
+                return *this;
+            }
+
+            // Multiply by another pack of complex number
+            Complex<F,L> operator*=(Twiddle<F> const & o) {
+                var = mm_complex_mul(var, mm_pair_set<F, L>::set(o.re, o.im));
+                return *this;
+            }
+
+            // Divide by another pack of complex number
+            Complex<F,L> operator/=(Twiddle<F> const & o) {
+                var = mm_complex_div(var, mm_pair_set<F, L>::set(o.re, o.im));
+                return *this;
+            }
 
             ///////////////////////////////////////////////////////////////
             /* Basic operations with a single real floating point number */
@@ -96,29 +143,33 @@ namespace FFTE {
                 return Complex(mm_div(var, mm_set1<F,L>::set(o)));
             }
 
-            // Add with another complex number
-            Complex<F,L> operator+=(Complex<F,L> const &o) {
-                var = mm_add(var, o.var);
+            // Add with a floating point number
+            Complex<F,L> operator+=(F o) {
+                var = mm_add(var, mm_set1<F,L>::set(o));
                 return *this;
             }
 
-            // Subtract another complex number from this
-            Complex<F,L> operator-=(Complex<F,L> const &o) {
-                var = mm_sub(var, o.var);
+            // Subtract a floating point number
+            Complex<F,L> operator-=(F o) {
+                var = mm_sub(var, mm_set1<F,L>::set(o));
                 return *this;
             }
 
-            // Multiply by another complex number
-            Complex<F,L> operator*=(Complex<F,L> const &o) {
-                var = mm_complex_mul(var, o.var);
+            // Multiply by a floating point number
+            Complex<F,L> operator*=(F o) {
+                var = mm_mul(var, mm_set1<F,L>::set(o));
                 return *this;
             }
 
-            // Divide by another complex number
-            Complex<F,L> operator/=(Complex<F,L> const &o) {
-                var = mm_complex_div(var, o.var);
+            // Divide by a floating point number
+            Complex<F,L> operator/=(F o) {
+                var = mm_div(var, mm_set1<F,L>::set(o));
                 return *this;
             }
+
+            ///////////////////
+            /* Other methods */
+            ///////////////////
 
             // Store the modulus of the complex number in an array of size L/2
             void modulus(F* dest) {
@@ -159,8 +210,8 @@ namespace FFTE {
         os << "( ";
         for(int i = 0; i < L; i+=2) {
             os << var[i];
-            if(var[i+1] < 0) os << " - " << -var[i+1];
-            else os << " + " << var[i+1];
+            if(var[i+1] < 0) os << " - " << -var[i+1] << "i";
+            else os << " + " << var[i+1] << "i";
             if(i+2 < L) os << ", ";
         }
         os << " )";
