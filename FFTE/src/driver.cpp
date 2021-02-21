@@ -1,4 +1,5 @@
 #include "test.hpp"
+#include "Engine.hpp"
 #include <iostream>
 
 /**
@@ -8,5 +9,18 @@
 using namespace FFTE;
 // Main function. Used for calling different parts of the testing code
 int main() {
-    check_fft_multidim(Direction::forward);
+    const int n = 4*9*7;
+    auto input  = FFTE::complex_alloc<double,4>(n);
+    auto output = FFTE::complex_alloc<double,4>(n);
+    for(int i = 0; i < n; i++) {
+        double tmp[4] = {1.*i, 2.*i, 3.*i, 4.*i};
+        input[i] = FFTE::Complex<double,4>(tmp);
+    }
+    std::cout << "Output:\n";
+    FFTE::fft<double, 4, n>(input, output, FFTE::Direction::inverse);
+    for(int i = 0; i < n; i++) {
+        std::cout << output[i]/((double) n) << "\n";
+    }
+    _mm_free(input);
+    _mm_free(output);
 }

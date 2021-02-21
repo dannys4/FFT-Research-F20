@@ -74,7 +74,7 @@ void check_fft_multidim(Direction dir) {
     biFuncNode<double, 4> root[ell];
     init_fft_tree(root, n);
 
-    auto al = sizeof(Complex<double, 4>);
+    auto al = alignof(Complex<double, 4>);
 
     auto in = (Complex<double, 4>*) aligned_alloc(al, n*sizeof(Complex<double, 4>));
     auto out_new = (Complex<double, 4>*) aligned_alloc(al, n*sizeof(Complex<double, 4>));

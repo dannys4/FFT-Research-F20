@@ -6,7 +6,7 @@
 
 namespace FFTE {
     template<typename F, int L>
-    class Complex {
+    class alignas(L*sizeof(F)) Complex {
         public:
             // One 64-bit Complex-- 2 doubles-- pack<double, 2>::type == _m128d
             // Two 64-bit Complex-- 4 doubles-- pack<double, 4>::type == _m256d
@@ -17,6 +17,8 @@ namespace FFTE {
             explicit Complex(typename pack<F,L>::type v): var(v) {}
             
             explicit Complex(F x, F y): var(mm_pair_set<F,L>::set(x, y)) {}
+
+            explicit Complex(): var(mm_zero<F,L>::get()) {}
 
             ///////////////////////////////////////////////////////////
             /* Basic operations with another pack of complex numbers */

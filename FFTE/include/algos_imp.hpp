@@ -118,7 +118,7 @@ namespace FFTE {
 
         // I'm currently using a temporary storage space malloc'd in recursive calls.
         // This isn't optimal and will change as the engine develops
-        auto z = (Complex<F,L>*) aligned_alloc(sizeof(Complex<F,L>), N*sizeof(Complex<F,L>));
+        auto z = (Complex<F,L>*) aligned_alloc(alignof(Complex<F,L>), N*sizeof(Complex<F,L>));
 
         // Find the FFT of the "rows" of the input signal and twiddle them accordingly
         Complex<F,L> w1 = omega<F,L>::get(1, N, dir);
@@ -169,7 +169,7 @@ namespace FFTE {
         biFuncNode<F,L>* subFFT = sRoot + sRoot->left;
 
         // Temporary workspace
-        auto z = (Complex<F,L>*) aligned_alloc(sizeof(Complex<F,L>), (p-1)*sizeof(Complex<F,L>));
+        auto z = (Complex<F,L>*) aligned_alloc(alignof(Complex<F,L>), (p-1)*sizeof(Complex<F,L>));
 
         // Loop variables
         int ak = 1;
@@ -228,7 +228,7 @@ namespace FFTE {
         }
 
         // Malloc a temporary array to hold intermediate results
-        auto z = (Complex<F,L>*) aligned_alloc(sizeof(Complex<F,L>), N*sizeof(Complex<F,L>));
+        auto z = (Complex<F,L>*) aligned_alloc(alignof(Complex<F,L>), N*sizeof(Complex<F,L>));
 
         // Take the FFT of the "rows" and put output into z.
         reference_composite_FFT_helper(N2, x, z, N1*s_in, 1, dir);

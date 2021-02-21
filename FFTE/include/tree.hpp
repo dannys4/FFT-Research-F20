@@ -14,7 +14,7 @@
 #define FFTE_FACTORS_LEN 200
 
 // This is the minimum signal size for us to use Rader's algorithm
-#define FFTE_RADER_MIN 27
+#define FFTE_RADER_MIN 1000
 
 namespace FFTE {
     
