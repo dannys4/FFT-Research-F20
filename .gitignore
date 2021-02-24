@@ -15,3 +15,4 @@
 
 # make sure to include any gitignore files
 !.gitignore
+!README.md
