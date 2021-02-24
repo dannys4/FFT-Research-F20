@@ -1,5 +1,5 @@
 INCDIR=./include
-CC=g++-9
+CC=g++
 SIMDARGS= -mfma -mavx2
 STD=11
 CFLAGS=-I$(INCDIR) $(SIMDARGS) -ggdb3 -Wall -std=c++$(STD)
@@ -17,11 +17,8 @@ DEPS=$(patsubst $(INCDIR)/%,%,$(_DEPS))
 _OBJ=$(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(wildcard $(SRCDIR)/*.cpp)) 
 OBJ=$(patsubst %,%,$(_OBJ))
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(INCDIR)/%.hpp
-	$(dir_guard)
-	$(CC) $(CFLAGS) -c $< -o $@
-
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+	$(dir_guard)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 run: $(OBJ)
