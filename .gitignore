@@ -11,6 +11,7 @@
 /**/run
 /**/callgrind.out.*
 /**/.devcontainer
+/FFTE/deprecated/*
 
 # make sure to include any gitignore files
 !.gitignore
