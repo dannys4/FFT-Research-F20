@@ -13,7 +13,9 @@ int main() {
     auto input  = FFTE::complex_alloc<double,4>(n);
     auto output = FFTE::complex_alloc<double,4>(n);
     for(int i = 0; i < n; i++) {
-        double tmp[4] = {1.*i, 2.*i, 3.*i, 4.*i};
+        std::complex<double> tmp1{1.*i, 2.*i};
+        std::complex<double> tmp2{3.*i, 4.*i};
+        std::complex<double> tmp[2] {tmp1, tmp2};
         input[i] = FFTE::Complex<double,4>(tmp);
     }
     std::cout << "Output:\n";
