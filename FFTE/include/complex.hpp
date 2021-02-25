@@ -18,6 +18,10 @@ namespace FFTE {
             
             explicit Complex(F x, F y): var(mm_pair_set<F,L>::set(x, y)) {}
 
+            explicit Complex(std::complex<F> c): var(mm_pair_set<F,L>::set(c.real, c.imag)) {}
+
+            explicit Complex(std::complex<F>* c): var(mm_complex_load<F,L>::load(c)) {}
+
             explicit Complex(): var(mm_zero<F,L>::get()) {}
 
             ///////////////////////////////////////////////////////////

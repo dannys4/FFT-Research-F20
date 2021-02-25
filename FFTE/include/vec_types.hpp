@@ -77,6 +77,7 @@ namespace FFTE {
     template<typename F, int L> struct mm_store {};
     template<typename F, int L> struct mm_pair_set{};
     template<typename F, int L> struct mm_set1{};
+    template<typename F, int L> struct mm_complex_load{};
 
     /* Specializations for singular type */
 
@@ -157,6 +158,14 @@ namespace FFTE {
         static inline pack<float, 4>::type set(float x) { return _mm_set1_ps(x); }
     };
 
+    // Create a vectorized type from pointer to two 32-bit floating point complex numbers
+    template<>
+    struct mm_complex_load<float, 4> {
+        static inline pack<float, 4>::type load(std::complex<float> const *src) {
+            return _mm_setr_ps(src[0].real(), src[0].imag(), src[1].real(), src[1].imag());
+        }
+    };
+
     //////////////////////////////////////////
     /* Below are structs for pack<float, 8> */
     //////////////////////////////////////////
@@ -189,6 +198,17 @@ namespace FFTE {
     template<>
     struct mm_set1<float,8> {
         static inline pack<float, 8>::type set(float x) { return _mm256_set1_ps(x); }
+    };
+
+    // Create a vectorized type from pointer to four 32-bit floating point complex numbers
+    template<>
+    struct mm_complex_load<float, 8> {
+        static inline pack<float, 8>::type load(std::complex<float> const *src) {
+            return _mm256_setr_ps(src[0].real(), src[0].imag(),
+                                  src[1].real(), src[1].imag(),
+                                  src[2].real(), src[2].imag(),
+                                  src[3].real(), src[3].imag());
+        }
     };
 
     ///////////////////////////////////////////
@@ -225,6 +245,14 @@ namespace FFTE {
         static inline pack<double, 2>::type set(double x) { return _mm_set1_pd(x); }
     };
 
+    // Create a vectorized type from pointer to one 64-bit floating point complex number
+    template<>
+    struct mm_complex_load<double, 2> {
+        static inline pack<double, 2>::type load(std::complex<double> const *src) {
+            return _mm_setr_pd(src[0].real(), src[0].imag());
+        }
+    };
+
     ///////////////////////////////////////////
     /* Below are structs for pack<double, 4> */
     ///////////////////////////////////////////
@@ -257,6 +285,14 @@ namespace FFTE {
     template<>
     struct mm_set1<double, 4> {
         static inline pack<double, 4>::type set(double x) { return _mm256_set1_pd(x); }
+    };
+
+    // Create a vectorized type from pointer to two 64-bit floating point complex numbers
+    template<>
+    struct mm_complex_load<double, 4> {
+        static inline pack<double, 4>::type load(std::complex<double> const *src) {
+            return _mm256_setr_pd(src[0].real(), src[0].imag(), src[1].real(), src[1].imag());
+        }
     };
 
     ///////////////////////////////////////////////////
