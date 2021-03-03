@@ -151,7 +151,7 @@ namespace FFTE {
         if((f & 0x1) == 0) return 2;
 
         // Check all odd numbers after that
-        for(int k = 3; k*k < f; k+=2) {
+        for(size_t k = 3; k*k < f; k+=2) {
             if( f % k == 0 ) return k;
         }
 

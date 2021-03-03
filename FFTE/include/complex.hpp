@@ -1,9 +1,18 @@
+/**
+ * Code Author: Danny Sharp
+ * This file is part of FFTE (Fast Fourier Transform Engine)
+ */
+
 #ifndef FFTE_COMPLEX_HPP
 #define FFTE_COMPLEX_HPP
 #include <type_traits>
 #include <iostream>
 #include "vec_types.hpp"
 
+/**
+ * This file holds the tools of using Complex numbers in a templated fashion
+ * using vectorized intrinsics.
+ */
 namespace FFTE {
     template<typename F, int L>
     class alignas(L*sizeof(F)) Complex {
@@ -14,13 +23,17 @@ namespace FFTE {
             // Four 64-bit Complex-- 8 floats -- pack<float, 8>::type == _m256
             explicit Complex(F* const f): var(mm_load<F,L>::load(f)) {}
 
+            explicit Complex(std::initializer_list<F> il): var(mm_load<F,L>::load(il.begin())) {};
+
             explicit Complex(typename pack<F,L>::type v): var(v) {}
             
             explicit Complex(F x, F y): var(mm_pair_set<F,L>::set(x, y)) {}
 
-            explicit Complex(std::complex<F> c): var(mm_pair_set<F,L>::set(c.real, c.imag)) {}
+            explicit Complex(std::complex<F>& c): var(mm_pair_set<F,L>::set(c.real, c.imag)) {}
 
             explicit Complex(std::complex<F>* c): var(mm_complex_load<F,L>::load(c)) {}
+
+            explicit Complex(std::initializer_list<std::complex<F>> il): var(mm_complex_load<F,L>::load(il.begin())) {};
 
             explicit Complex(): var(mm_zero<F,L>::get()) {}
 
