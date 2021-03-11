@@ -135,6 +135,40 @@ void check_fft_tree() {
     std::cout << "Done checking the call graph!\n\n";
 }
 
+void check_complex_ops() {
+    std::complex<double> x1_d {1., 2.};
+    std::complex<double> y1_d {3., 4.};
+    std::complex<double> x2_d {5., 6.};
+    std::complex<double> y2_d {7., 8.};
+    std::complex<float> x1_f {1., 2.};
+    std::complex<float> y1_f {3., 4.};
+    std::complex<float> x2_f {5., 6.};
+    std::complex<float> y2_f {7., 8.};
+    std::complex<float> x3_f {9., 10.};
+    std::complex<float> y3_f {11., 12.};
+    std::complex<float> x4_f {13., 14.};
+    std::complex<float> y4_f {15., 16.};
+
+    Complex<double, 2> x2_df {x1_d};
+    Complex<double, 2> y2_df {y1_d};
+    double c_d = 2.1;
+    float c_f = 2.1f;
+
+    std::cout << x2_df << "*" << y2_df << " = " << x2_df*y2_df << ", ref = " << x1_d*y1_d << "\n";
+    std::cout << x2_df << "+" << y2_df << " = " << x2_df+y2_df << ", ref = " << x1_d+y1_d << "\n";
+    std::cout << x2_df << "-" << y2_df << " = " << x2_df-y2_df << ", ref = " << x1_d-y1_d << "\n";
+    std::cout << x2_df << "/" << y2_df << " = " << x2_df/y2_df << ", ref = " << x1_d/y1_d << "\n";
+
+    Complex<double, 4> x4_df {x1_d, x2_d};
+    Complex<double, 4> y4_df {y1_d, y2_d};
+    
+    std::cout << x4_df << "*" << y4_df << " = " << x4_df*y4_df << ", ref = " << x1_d*y1_d << ", " << x2_d*y2_d << "\n";
+    std::cout << x4_df << "+" << y4_df << " = " << x4_df+y4_df << ", ref = " << x1_d+y1_d << ", " << x2_d+y2_d << "\n";
+    std::cout << x4_df << "-" << y4_df << " = " << x4_df-y4_df << ", ref = " << x1_d-y1_d << ", " << x2_d-y2_d << "\n";
+    std::cout << x4_df << "/" << y4_df << " = " << x4_df/y4_df << ", ref = " << x1_d/y1_d << ", " << x2_d/y2_d << "\n";
+
+    // std::cout << x << "*" << c_d << " = " << x*c_d << ", ref = " << x1_d*c_d << "\n";
+}
 
 /* Functions to clock my running times. These check in different cases
  * to see if what I'm doing is actually sufficiently fast

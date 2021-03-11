@@ -12,6 +12,7 @@
 /**/callgrind.out.*
 /**/.devcontainer
 /**/deprecated/*
+/**/*.ipynb*
 
 # make sure to include any gitignore files
 !.gitignore

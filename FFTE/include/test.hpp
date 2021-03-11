@@ -30,6 +30,9 @@ void check_fft_tree();
 // Check the error in the omega values
 void check_omega();
 
+// Check the operations in complex class
+void check_complex_ops();
+
 // Time an FFT
 void time_fft();
 
