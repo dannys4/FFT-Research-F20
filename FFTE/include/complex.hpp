@@ -169,6 +169,7 @@ namespace FFTE {
             typename pack<F,L>::type var {};
     };
 
+
     // Determines how my complex number should be printed to an ostream
     template<typename F, int L>
     inline std::ostream& operator<<(std::ostream& os, const Complex<F,L>& dt){
