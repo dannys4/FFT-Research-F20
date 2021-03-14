@@ -60,7 +60,7 @@ namespace FFTE {
         // Calculate first element of output
         Complex<F,L> tmp = sig_in[0];
         for(size_t n = 1; n < size; n++) {
-            tmp = tmp + sig_in[n*s_in];
+            tmp += sig_in[n*s_in];
         }
         sig_out[0] = tmp;
 
@@ -71,13 +71,13 @@ namespace FFTE {
 
             // Calculate kth output
             for(size_t n = 1; n < size; n++) {
-                tmp = tmp + wkn*sig_in[n*s_in];
-                wkn = wkn*wk;
+                tmp += wkn*sig_in[n*s_in];
+                wkn *= wk;
             }
             sig_out[k*s_out] = tmp;
 
             // "Increment" wk and "reset" wkn
-            wk = wk*w0;
+            wk *= w0;
             wkn = wk;
         }
     }
@@ -305,8 +305,8 @@ namespace FFTE {
 	template<typename F, int L>
 	inline void pow3_FFT(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sRoot, Direction dir) {
         const size_t N = sRoot->sz;
-        Complex<F,L> plus120 {-0.5, -sqrt(3)/2.};
-        Complex<F,L> minus120 {-0.5, sqrt(3)/2.};
+        Complex<F,L> plus120 (-0.5, -sqrt(3)/2.);
+        Complex<F,L> minus120 (-0.5, sqrt(3)/2.);
         switch(dir) {
             case Direction::forward: pow3_FFT_helper(N, x, y, s_in, s_out, dir, plus120, minus120); break;
             case Direction::inverse: pow3_FFT_helper(N, x, y, s_in, s_out, dir, minus120, plus120); break;
