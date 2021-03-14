@@ -139,59 +139,59 @@ void check_complex_ops_double_2() {
     std::cout << "Checking Complex Operations of Complex<double,2>\n\n";
     
     // Initial Values
-    std::complex<double> x1_d {1., 2.};
-    std::complex<double> y1_d {3., 4.};
-    double c_d = 2.1;
+    std::complex<double> x1 {1., 2.};
+    std::complex<double> y1 {3., 4.};
+    double alpha = 2.1;
 
     // Complex Objects
-    Complex<double, 2> x2_df {x1_d};
-    Complex<double, 2> y2_df {y1_d};
+    Complex<double, 2> x {x1};
+    Complex<double, 2> y {y1};
 
     // Test each out-of-place operation
-    std::cout << x2_df << "*" << y2_df << " = " << x2_df*y2_df << ", ref = " << x1_d*y1_d << "\n";
-    std::cout << x2_df << "+" << y2_df << " = " << x2_df+y2_df << ", ref = " << x1_d+y1_d << "\n";
-    std::cout << x2_df << "-" << y2_df << " = " << x2_df-y2_df << ", ref = " << x1_d-y1_d << "\n";
-    std::cout << x2_df << "/" << y2_df << " = " << x2_df/y2_df << ", ref = " << x1_d/y1_d << "\n";
+    std::cout << x << "*" << y << " = " << x*y << ", ref = " << x1*y1 << "\n";
+    std::cout << x << "+" << y << " = " << x+y << ", ref = " << x1+y1 << "\n";
+    std::cout << x << "-" << y << " = " << x-y << ", ref = " << x1-y1 << "\n";
+    std::cout << x << "/" << y << " = " << x/y << ", ref = " << x1/y1 << "\n";
     
     // Test each in place operation
-    std::cout << x2_df << "*=" << y2_df << " ==> ";
-    x2_df *= y2_df; x1_d *= y1_d;
-    std::cout << x2_df << ", ref = " << x1_d << "\n";
+    std::cout << x << "*=" << y << " ==> ";
+    x *= y; x1 *= y1;
+    std::cout << x << ", ref = " << x1 << "\n";
 
-    std::cout << x2_df << "+=" << y2_df << " ==> ";
-    x2_df += y2_df; x1_d += y1_d;
-    std::cout << x2_df << ", ref = " << x1_d << "\n";
+    std::cout << x << "+=" << y << " ==> ";
+    x += y; x1 += y1;
+    std::cout << x << ", ref = " << x1 << "\n";
 
-    std::cout << x2_df << "/=" << y2_df << " ==> ";
-    x2_df /= y2_df; x1_d /= y1_d;
-    std::cout << x2_df << ", ref = " << x1_d << "\n";
+    std::cout << x << "/=" << y << " ==> ";
+    x /= y; x1 /= y1;
+    std::cout << x << ", ref = " << x1 << "\n";
 
-    std::cout << x2_df << "-=" << y2_df << " ==> ";
-    x2_df -= y2_df; x1_d -= y1_d;
-    std::cout << x2_df << ", ref = " << x1_d << "\n";
+    std::cout << x << "-=" << y << " ==> ";
+    x -= y; x1 -= y1;
+    std::cout << x << ", ref = " << x1 << "\n";
 
     // Test each out-of-place operation with real number
-    std::cout << x2_df << "*" << c_d << " = " << x2_df*c_d << ", ref = " << x1_d*c_d << "\n";
-    std::cout << x2_df << "+" << c_d << " = " << x2_df+c_d << ", ref = " << x1_d+c_d << "\n";
-    std::cout << x2_df << "-" << c_d << " = " << x2_df-c_d << ", ref = " << x1_d-c_d << "\n";
-    std::cout << x2_df << "/" << c_d << " = " << x2_df/c_d << ", ref = " << x1_d/c_d << "\n";
+    std::cout << x << "*" << alpha << " = " << x*alpha << ", ref = " << x1*alpha << "\n";
+    std::cout << x << "+" << alpha << " = " << x+alpha << ", ref = " << x1+alpha << "\n";
+    std::cout << x << "-" << alpha << " = " << x-alpha << ", ref = " << x1-alpha << "\n";
+    std::cout << x << "/" << alpha << " = " << x/alpha << ", ref = " << x1/alpha << "\n";
     
     // Test each in-place operation with real number
-    std::cout << x2_df << "*=" << c_d << " ==> ";
-    x2_df *= c_d; x1_d *= c_d;
-    std::cout << x2_df << ", ref = " << x1_d << "\n";
+    std::cout << x << "*=" << alpha << " ==> ";
+    x *= alpha; x1 *= alpha;
+    std::cout << x << ", ref = " << x1 << "\n";
 
-    std::cout << x2_df << "+=" << c_d << " ==> ";
-    x2_df += c_d; x1_d += c_d;
-    std::cout << x2_df << ", ref = " << x1_d << "\n";
+    std::cout << x << "+=" << alpha << " ==> ";
+    x += alpha; x1 += alpha;
+    std::cout << x << ", ref = " << x1 << "\n";
 
-    std::cout << x2_df << "/=" << c_d << " ==> ";
-    x2_df /= c_d; x1_d /= c_d;
-    std::cout << x2_df << ", ref = " << x1_d << "\n";
+    std::cout << x << "/=" << alpha << " ==> ";
+    x /= alpha; x1 /= alpha;
+    std::cout << x << ", ref = " << x1 << "\n";
 
-    std::cout << x2_df << "-=" << c_d << " ==> ";
-    x2_df -= c_d; x1_d -= c_d;
-    std::cout << x2_df << ", ref = " << x1_d << "\n";
+    std::cout << x << "-=" << alpha << " ==> ";
+    x -= alpha; x1 -= alpha;
+    std::cout << x << ", ref = " << x1 << "\n";
 
     std::cout << "\nDone testing Complex<double,2>!\n\n";
 }
@@ -200,61 +200,61 @@ void check_complex_ops_double_4() {
     std::cout << "Checking Complex Operations of Complex<double,4>\n\n";
     
     // Initial Values
-    std::complex<double> x1_d {1., 2.};
-    std::complex<double> y1_d {3., 4.};
-    std::complex<double> x2_d {5., 6.};
-    std::complex<double> y2_d {7., 8.};
-    double c_d = 2.1;
+    std::complex<double> x1 {1., 2.};
+    std::complex<double> y1 {3., 4.};
+    std::complex<double> x2 {5., 6.};
+    std::complex<double> y2 {7., 8.};
+    double alpha = 2.1;
 
     // Complex Objects
-    Complex<double, 4> x2_df {x1_d, x2_d};
-    Complex<double, 4> y2_df {y1_d, y2_d};
+    Complex<double, 4> x {x1, x2};
+    Complex<double, 4> y {y1, y2};
 
     // Test each out-of-place operation
-    std::cout << x2_df << "*" << y2_df << " = " << x2_df*y2_df << ", ref = " << x1_d*y1_d << ", " << x2_d*y2_d << "\n";
-    std::cout << x2_df << "+" << y2_df << " = " << x2_df+y2_df << ", ref = " << x1_d+y1_d << ", " << x2_d+y2_d << "\n";
-    std::cout << x2_df << "-" << y2_df << " = " << x2_df-y2_df << ", ref = " << x1_d-y1_d << ", " << x2_d-y2_d << "\n";
-    std::cout << x2_df << "/" << y2_df << " = " << x2_df/y2_df << ", ref = " << x1_d/y1_d << ", " << x2_d/y2_d << "\n";
+    std::cout << x << "*" << y << " = " << x*y << ", ref = " << x1*y1 << ", " << x2*y2 << "\n";
+    std::cout << x << "+" << y << " = " << x+y << ", ref = " << x1+y1 << ", " << x2+y2 << "\n";
+    std::cout << x << "-" << y << " = " << x-y << ", ref = " << x1-y1 << ", " << x2-y2 << "\n";
+    std::cout << x << "/" << y << " = " << x/y << ", ref = " << x1/y1 << ", " << x2/y2 << "\n";
     
     // Test each in place operation
-    std::cout << x2_df << "*=" << y2_df << " ==> ";
-    x2_df *= y2_df; x1_d *= y1_d; x2_d *= y2_d;
-    std::cout << x2_df << ", ref = " << x1_d << ", " << x2_d << "\n";
+    std::cout << x << "*=" << y << " ==> ";
+    x *= y; x1 *= y1; x2 *= y2;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << "\n";
 
-    std::cout << x2_df << "+=" << y2_df << " ==> ";
-    x2_df += y2_df; x1_d += y1_d; x2_d += y2_d;
-    std::cout << x2_df << ", ref = " << x1_d << ", " << x2_d << "\n";
+    std::cout << x << "+=" << y << " ==> ";
+    x += y; x1 += y1; x2 += y2;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << "\n";
 
-    std::cout << x2_df << "/=" << y2_df << " ==> ";
-    x2_df /= y2_df; x1_d /= y1_d; x2_d /= y2_d;
-    std::cout << x2_df << ", ref = " << x1_d << ", " << x2_d << "\n";
+    std::cout << x << "/=" << y << " ==> ";
+    x /= y; x1 /= y1; x2 /= y2;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << "\n";
 
-    std::cout << x2_df << "-=" << y2_df << " ==> ";
-    x2_df -= y2_df; x1_d -= y1_d; x2_d -= y2_d;
-    std::cout << x2_df << ", ref = " << x1_d << ", " << x2_d << "\n";
+    std::cout << x << "-=" << y << " ==> ";
+    x -= y; x1 -= y1; x2 -= y2;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << "\n";
 
     // Test each out-of-place operation with real number
-    std::cout << x2_df << "*" << c_d << " = " << x2_df*c_d << ", ref = " << x1_d*c_d << ", " << x2_d*c_d << "\n";
-    std::cout << x2_df << "+" << c_d << " = " << x2_df+c_d << ", ref = " << x1_d+c_d << ", " << x2_d+c_d << "\n";
-    std::cout << x2_df << "-" << c_d << " = " << x2_df-c_d << ", ref = " << x1_d-c_d << ", " << x2_d-c_d << "\n";
-    std::cout << x2_df << "/" << c_d << " = " << x2_df/c_d << ", ref = " << x1_d/c_d << ", " << x2_d/c_d << "\n";
+    std::cout << x << "*" << alpha << " = " << x*alpha << ", ref = " << x1*alpha << ", " << x2*alpha << "\n";
+    std::cout << x << "+" << alpha << " = " << x+alpha << ", ref = " << x1+alpha << ", " << x2+alpha << "\n";
+    std::cout << x << "-" << alpha << " = " << x-alpha << ", ref = " << x1-alpha << ", " << x2-alpha << "\n";
+    std::cout << x << "/" << alpha << " = " << x/alpha << ", ref = " << x1/alpha << ", " << x2/alpha << "\n";
     
     // Test each in-place operation with real number
-    std::cout << x2_df << "*=" << c_d << " ==> ";
-    x2_df *= c_d; x1_d *= c_d; x2_d *= c_d;
-    std::cout << x2_df << ", ref = " << x1_d << ", " << x2_d << "\n";
+    std::cout << x << "*=" << alpha << " ==> ";
+    x *= alpha; x1 *= alpha; x2 *= alpha;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << "\n";
 
-    std::cout << x2_df << "+=" << c_d << " ==> ";
-    x2_df += c_d; x1_d += c_d; x2_d += c_d;
-    std::cout << x2_df << ", ref = " << x1_d << ", " << x2_d << "\n";
+    std::cout << x << "+=" << alpha << " ==> ";
+    x += alpha; x1 += alpha; x2 += alpha;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << "\n";
 
-    std::cout << x2_df << "/=" << c_d << " ==> ";
-    x2_df /= c_d; x1_d /= c_d; x2_d /= c_d;
-    std::cout << x2_df << ", ref = " << x1_d << ", " << x2_d << "\n";
+    std::cout << x << "/=" << alpha << " ==> ";
+    x /= alpha; x1 /= alpha; x2 /= alpha;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << "\n";
 
-    std::cout << x2_df << "-=" << c_d << " ==> ";
-    x2_df -= c_d; x1_d -= c_d; x2_d -= c_d;
-    std::cout << x2_df << ", ref = " << x1_d << ", " << x2_d << "\n";
+    std::cout << x << "-=" << alpha << " ==> ";
+    x -= alpha; x1 -= alpha; x2 -= alpha;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << "\n";
 
     std::cout << "\nDone testing Complex<double,4>!\n\n";
 }
@@ -263,78 +263,139 @@ void check_complex_ops_float_4() {
     std::cout << "Checking Complex Operations of Complex<float,4>\n\n";
     
     // Initial Values
-    std::complex<float> x1_d {1., 2.};
-    std::complex<float> y1_d {3., 4.};
-    std::complex<float> x2_d {5., 6.};
-    std::complex<float> y2_d {7., 8.};
-    float c_d = 2.1f;
+    std::complex<float> x1 {1., 2.};
+    std::complex<float> y1 {3., 4.};
+    std::complex<float> x2 {5., 6.};
+    std::complex<float> y2 {7., 8.};
+    float alpha = 2.1f;
 
     // Complex Objects
-    Complex<float, 4> x2_df {x1_d, x2_d};
-    Complex<float, 4> y2_df {y1_d, y2_d};
+    Complex<float, 4> x {x1, x2};
+    Complex<float, 4> y {y1, y2};
 
     // Test each out-of-place operation
-    std::cout << x2_df << "*" << y2_df << " = " << x2_df*y2_df << ", ref = " << x1_d*y1_d << ", " << x2_d*y2_d << "\n";
-    std::cout << x2_df << "+" << y2_df << " = " << x2_df+y2_df << ", ref = " << x1_d+y1_d << ", " << x2_d+y2_d << "\n";
-    std::cout << x2_df << "-" << y2_df << " = " << x2_df-y2_df << ", ref = " << x1_d-y1_d << ", " << x2_d-y2_d << "\n";
-    std::cout << x2_df << "/" << y2_df << " = " << x2_df/y2_df << ", ref = " << x1_d/y1_d << ", " << x2_d/y2_d << "\n";
+    std::cout << x << "*" << y << " = " << x*y << ", ref = " << x1*y1 << ", " << x2*y2 << "\n";
+    std::cout << x << "+" << y << " = " << x+y << ", ref = " << x1+y1 << ", " << x2+y2 << "\n";
+    std::cout << x << "-" << y << " = " << x-y << ", ref = " << x1-y1 << ", " << x2-y2 << "\n";
+    std::cout << x << "/" << y << " = " << x/y << ", ref = " << x1/y1 << ", " << x2/y2 << "\n";
     
     // Test each in place operation
-    std::cout << x2_df << "*=" << y2_df << " ==> ";
-    x2_df *= y2_df; x1_d *= y1_d; x2_d *= y2_d;
-    std::cout << x2_df << ", ref = " << x1_d << ", " << x2_d << "\n";
+    std::cout << x << "*=" << y << " ==> ";
+    x *= y; x1 *= y1; x2 *= y2;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << "\n";
 
-    std::cout << x2_df << "+=" << y2_df << " ==> ";
-    x2_df += y2_df; x1_d += y1_d; x2_d += y2_d;
-    std::cout << x2_df << ", ref = " << x1_d << ", " << x2_d << "\n";
+    std::cout << x << "+=" << y << " ==> ";
+    x += y; x1 += y1; x2 += y2;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << "\n";
 
-    std::cout << x2_df << "/=" << y2_df << " ==> ";
-    x2_df /= y2_df; x1_d /= y1_d; x2_d /= y2_d;
-    std::cout << x2_df << ", ref = " << x1_d << ", " << x2_d << "\n";
+    std::cout << x << "/=" << y << " ==> ";
+    x /= y; x1 /= y1; x2 /= y2;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << "\n";
 
-    std::cout << x2_df << "-=" << y2_df << " ==> ";
-    x2_df -= y2_df; x1_d -= y1_d; x2_d -= y2_d;
-    std::cout << x2_df << ", ref = " << x1_d << ", " << x2_d << "\n";
+    std::cout << x << "-=" << y << " ==> ";
+    x -= y; x1 -= y1; x2 -= y2;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << "\n";
 
     // Test each out-of-place operation with real number
-    std::cout << x2_df << "*" << c_d << " = " << x2_df*c_d << ", ref = " << x1_d*c_d << ", " << x2_d*c_d << "\n";
-    std::cout << x2_df << "+" << c_d << " = " << x2_df+c_d << ", ref = " << x1_d+c_d << ", " << x2_d+c_d << "\n";
-    std::cout << x2_df << "-" << c_d << " = " << x2_df-c_d << ", ref = " << x1_d-c_d << ", " << x2_d-c_d << "\n";
-    std::cout << x2_df << "/" << c_d << " = " << x2_df/c_d << ", ref = " << x1_d/c_d << ", " << x2_d/c_d << "\n";
+    std::cout << x << "*" << alpha << " = " << x*alpha << ", ref = " << x1*alpha << ", " << x2*alpha << "\n";
+    std::cout << x << "+" << alpha << " = " << x+alpha << ", ref = " << x1+alpha << ", " << x2+alpha << "\n";
+    std::cout << x << "-" << alpha << " = " << x-alpha << ", ref = " << x1-alpha << ", " << x2-alpha << "\n";
+    std::cout << x << "/" << alpha << " = " << x/alpha << ", ref = " << x1/alpha << ", " << x2/alpha << "\n";
     
     // Test each in-place operation with real number
-    std::cout << x2_df << "*=" << c_d << " ==> ";
-    x2_df *= c_d; x1_d *= c_d; x2_d *= c_d;
-    std::cout << x2_df << ", ref = " << x1_d << ", " << x2_d << "\n";
+    std::cout << x << "*=" << alpha << " ==> ";
+    x *= alpha; x1 *= alpha; x2 *= alpha;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << "\n";
 
-    std::cout << x2_df << "+=" << c_d << " ==> ";
-    x2_df += c_d; x1_d += c_d; x2_d += c_d;
-    std::cout << x2_df << ", ref = " << x1_d << ", " << x2_d << "\n";
+    std::cout << x << "+=" << alpha << " ==> ";
+    x += alpha; x1 += alpha; x2 += alpha;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << "\n";
 
-    std::cout << x2_df << "/=" << c_d << " ==> ";
-    x2_df /= c_d; x1_d /= c_d; x2_d /= c_d;
-    std::cout << x2_df << ", ref = " << x1_d << ", " << x2_d << "\n";
+    std::cout << x << "/=" << alpha << " ==> ";
+    x /= alpha; x1 /= alpha; x2 /= alpha;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << "\n";
 
-    std::cout << x2_df << "-=" << c_d << " ==> ";
-    x2_df -= c_d; x1_d -= c_d; x2_d -= c_d;
-    std::cout << x2_df << ", ref = " << x1_d << ", " << x2_d << "\n";
+    std::cout << x << "-=" << alpha << " ==> ";
+    x -= alpha; x1 -= alpha; x2 -= alpha;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << "\n";
 
     std::cout << "\nDone testing Complex<float,4>!\n\n";
 }
 
-void check_complex_ops() {
-    // std::complex<float> x1_f {1., 2.};
-    // std::complex<float> y1_f {3., 4.};
-    // std::complex<float> x2_f {5., 6.};
-    // std::complex<float> y2_f {7., 8.};
-    // std::complex<float> x3_f {9., 10.};
-    // std::complex<float> y3_f {11., 12.};
-    // std::complex<float> x4_f {13., 14.};
-    // std::complex<float> y4_f {15., 16.};
 
+void check_complex_ops_float_8() {
+    std::cout << "Checking Complex Operations of Complex<float,8>\n\n";
+    
+    // Initial Values
+    std::complex<float> y1 {3., 4.};
+    std::complex<float> x1 {1., 2.};
+    std::complex<float> x2 {5., 6.};
+    std::complex<float> y2 {7., 8.};
+    std::complex<float> x3 {9., 10.};
+    std::complex<float> y3 {11., 12.};
+    std::complex<float> x4 {13., 14.};
+    std::complex<float> y4 {15., 16.};
+    float alpha = 2.1f;
+
+    // Complex Objects
+    Complex<float, 8> x {x1, x2, x3, x4};
+    Complex<float, 8> y {y1, y2, y3, y4};
+
+    // Test each out-of-place operation
+    std::cout << x << "*" << y << " = " << x*y << ", ref = " << x1*y1 << ", " << x2*y2 << ", " << x3*y3 << ", " << x4*y4 << "\n";
+    std::cout << x << "+" << y << " = " << x+y << ", ref = " << x1+y1 << ", " << x2+y2 << ", " << x3+y3 << ", " << x4+y4 << "\n";
+    std::cout << x << "-" << y << " = " << x-y << ", ref = " << x1-y1 << ", " << x2-y2 << ", " << x3-y3 << ", " << x4-y4 << "\n";
+    std::cout << x << "/" << y << " = " << x/y << ", ref = " << x1/y1 << ", " << x2/y2 << ", " << x3/y3 << ", " << x4/y4 << "\n";
+    
+    // Test each in place operation
+    std::cout << x << "*=" << y << " ==> ";
+    x *= y; x1 *= y1; x2 *= y2; x3 *= y3; x4 *= y4;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << ", " << x3 << ", " << x4 << "\n";
+
+    std::cout << x << "+=" << y << " ==> ";
+    x += y; x1 += y1; x2 += y2; x3 += y3; x4 += y4;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << ", " << x3 << ", " << x4 << "\n";
+
+    std::cout << x << "/=" << y << " ==> ";
+    x /= y; x1 /= y1; x2 /= y2; x3 /= y3; x4 /= y4;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << ", " << x3 << ", " << x4 << "\n";
+
+    std::cout << x << "-=" << y << " ==> ";
+    x -= y; x1 -= y1; x2 -= y2; x3 -= y3; x4 -= y4;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << ", " << x3 << ", " << x4 << "\n";
+
+    // Test each out-of-place operation with real number
+    std::cout << x << "*" << alpha << " = " << x*alpha << ", ref = " << x1*alpha << ", " << x2*alpha << ", " << x3*alpha << ", " << x4*alpha << "\n";
+    std::cout << x << "+" << alpha << " = " << x+alpha << ", ref = " << x1+alpha << ", " << x2+alpha << ", " << x3+alpha << ", " << x4+alpha << "\n";
+    std::cout << x << "-" << alpha << " = " << x-alpha << ", ref = " << x1-alpha << ", " << x2-alpha << ", " << x3-alpha << ", " << x4-alpha << "\n";
+    std::cout << x << "/" << alpha << " = " << x/alpha << ", ref = " << x1/alpha << ", " << x2/alpha << ", " << x3/alpha << ", " << x4/alpha << "\n";
+    
+    // Test each in-place operation with real number
+    std::cout << x << "*=" << alpha << " ==> ";
+    x *= alpha; x1 *= alpha; x2 *= alpha; x3 *= alpha; x4 *= alpha;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << ", " << x3 << ", " << x4 << "\n";
+
+    std::cout << x << "+=" << alpha << " ==> ";
+    x += alpha; x1 += alpha; x2 += alpha; x3 += alpha; x4 += alpha;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << ", " << x3 << ", " << x4 << "\n";
+
+    std::cout << x << "/=" << alpha << " ==> ";
+    x /= alpha; x1 /= alpha; x2 /= alpha; x3 /= alpha; x4 /= alpha;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << ", " << x3 << ", " << x4 << "\n";
+
+    std::cout << x << "-=" << alpha << " ==> ";
+    x -= alpha; x1 -= alpha; x2 -= alpha; x3 -= alpha; x4 -= alpha;
+    std::cout << x << ", ref = " << x1 << ", " << x2 << ", " << x3 << ", " << x4 << "\n";
+
+    std::cout << "\nDone testing Complex<float,8>!\n\n";
+}
+
+
+void check_complex_ops() {
     check_complex_ops_double_2();
     check_complex_ops_double_4();
     check_complex_ops_float_4();
+    check_complex_ops_float_8();
 }
 
 /* Functions to clock my running times. These check in different cases
