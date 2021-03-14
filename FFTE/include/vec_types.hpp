@@ -369,7 +369,7 @@ namespace FFTE {
 
     // Perform division on vectorized packs of four floats
     inline pack<float, 4>::type mm_div(pack<float, 4>::type const &x,pack<float, 4>::type const &y) {
-        return _mm_mul_ps(x, y);
+        return _mm_div_ps(x, y);
     }
 
     // Perform division on vectorized packs of eight floats

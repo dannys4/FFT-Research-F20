@@ -91,12 +91,12 @@ namespace FFTE {
 
             // Add with a floating point number
             Complex<F,L> operator+(F o) {
-                return Complex(mm_add(var, mm_set1<F,L>::set(o)));
+                return Complex(mm_add(var, mm_pair_set<F,L>::set(o, 0)));
             }
 
             // Subtract a floating point number
             Complex<F,L> operator-(F o) {
-                return Complex(mm_sub(var, mm_set1<F,L>::set(o)));
+                return Complex(mm_sub(var, mm_pair_set<F,L>::set(o, 0)));
             }
 
             // Multiply by a floating point number
@@ -111,13 +111,13 @@ namespace FFTE {
 
             // Add with a floating point number
             Complex<F,L> operator+=(F o) {
-                var = mm_add(var, mm_set1<F,L>::set(o));
+                var = mm_add(var, mm_pair_set<F,L>::set(o, 0));
                 return *this;
             }
 
             // Subtract a floating point number
             Complex<F,L> operator-=(F o) {
-                var = mm_sub(var, mm_set1<F,L>::set(o));
+                var = mm_sub(var, mm_pair_set<F,L>::set(o, 0));
                 return *this;
             }
 
