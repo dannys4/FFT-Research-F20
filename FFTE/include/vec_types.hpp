@@ -413,7 +413,7 @@ namespace FFTE {
         auto mult = _mm256_fmaddsub_ps(x, cc, dba);
         return mult;
     }
-    
+
     // Complex multiply one pair of doubles
     inline pack<double, 2>::type mm_complex_mul(pack<double, 2>::type const &x, pack<double, 2>::type const &y) {
         auto cc = _mm_permute_pd(y, 0);
