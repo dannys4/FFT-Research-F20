@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include "algos.hpp"
+#include "Engine.hpp"
 #include <random>
 #include <algorithm>
 #include <functional>
@@ -30,8 +31,11 @@ void check_fft_tree();
 // Check the error in the omega values
 void check_omega();
 
-// Check the operations in complex class
+// Check all arithmetic operations in complex class
 void check_complex_ops();
+
+// Check examples of batch ffts
+void check_batch_fft();
 
 // Time an FFT
 void time_fft();
@@ -43,8 +47,8 @@ void time_complex_mult();
 // C++14+ only!
 void time_const_tree();
 
-// Time using the omega class
-void time_omega();
+// Time the batch FFT
+void time_batch_fft();
 
 // Time the FFTs for many numbers and input the times into a csv
 void test_FFT_into_csv(std::string filename, int maxSize);

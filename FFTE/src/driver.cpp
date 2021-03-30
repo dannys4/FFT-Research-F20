@@ -10,7 +10,10 @@ using namespace FFTE;
 using F = float;
 // Main function. Used for calling different parts of the testing code
 int main() {
-    const int n = 2*3*5;
+    time_batch_fft();
+}
+
+    /* const int n = 2*3*5;
     const int L = 8;
     FFTE::complex_vector<F, L> input {};
     for(int i = 0; i < n; i++) {
@@ -20,6 +23,4 @@ int main() {
     auto output = engine<F, L>::fft(input, FFTE::Direction::inverse);
     for(int i = 0; i < n; i++) {
         std::cout  << output[i]/((F) n) << " \n";
-    }
-    // check_complex_ops();
-}
+    } */

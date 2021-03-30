@@ -6,7 +6,8 @@
 #include "test.hpp"
 #define CHECKSUM_COMP 1
 #define ENTRYWISE_COMP 0
-#define FFT_LENGTH 32
+#define BATCH_PRINT 1
+#define FFT_LENGTH 1024
 
 /*
  * Functions to test veracity of outputs. These check against references
@@ -123,6 +124,7 @@ void check_fft_multidim(Direction dir) {
     }
 }
 
+// Checks an example of the function call tree developed
 void check_fft_tree() {
     std::cout << "Checking the output of call graph node sizes against expected output...\n";
     size_t N = 15120;
@@ -135,6 +137,11 @@ void check_fft_tree() {
     std::cout << "Done checking the call graph!\n\n";
 }
 
+/* Functions to check all the arithmetic operations for complex types. 
+ * Performs similar checks for float-4, float-8, double-2, and double-4.
+ */
+
+// Double-2 checks
 void check_complex_ops_double_2() {
     std::cout << "Checking Complex Operations of Complex<double,2>\n\n";
     
@@ -196,6 +203,7 @@ void check_complex_ops_double_2() {
     std::cout << "\nDone testing Complex<double,2>!\n\n";
 }
 
+// Double-4 checks
 void check_complex_ops_double_4() {
     std::cout << "Checking Complex Operations of Complex<double,4>\n\n";
     
@@ -259,6 +267,7 @@ void check_complex_ops_double_4() {
     std::cout << "\nDone testing Complex<double,4>!\n\n";
 }
 
+// Float-4 checks
 void check_complex_ops_float_4() {
     std::cout << "Checking Complex Operations of Complex<float,4>\n\n";
     
@@ -322,7 +331,7 @@ void check_complex_ops_float_4() {
     std::cout << "\nDone testing Complex<float,4>!\n\n";
 }
 
-
+// Float-8 checks
 void check_complex_ops_float_8() {
     std::cout << "Checking Complex Operations of Complex<float,8>\n\n";
     
@@ -390,12 +399,38 @@ void check_complex_ops_float_8() {
     std::cout << "\nDone testing Complex<float,8>!\n\n";
 }
 
-
+// Checking the arithmetic for every complex type.
 void check_complex_ops() {
     check_complex_ops_double_2();
     check_complex_ops_double_4();
     check_complex_ops_float_4();
     check_complex_ops_float_8();
+}
+
+// Check the FFT 
+void check_batch_fft() {
+    typedef float T;
+    const int P = 7;
+    const int N = FFT_LENGTH;
+    std::cout << "Checking the batch FFT on " << P << " vectors of length " << N << "...\n\n";
+    FFTE::std_arrvec<T,P> in_d {};
+    for(int i = 0; i < N; i++) {
+        for(int j = 0; j < P; j++) {
+            auto t = std::complex<T>(2*j*i + i, 2*j*i + 2*i);
+            in_d[j].push_back(t);
+        }
+    }
+    auto out_d = batch_fft<P>(in_d, Direction::forward);
+    #if BATCH_PRINT
+    for(int i = 0; i < N; i++) {
+        std::cout << out_d[0][i];
+        for(int j = 1; j < P; j++) {
+            std::cout << ", " << out_d[j][i];
+        }
+        std::cout << "\n";
+    }
+    #endif
+    std::cout << "Done checking the batch FFT!\n\n";
 }
 
 /* Functions to clock my running times. These check in different cases
@@ -454,6 +489,33 @@ void time_fft() {
     free(in); free(out_ref); free(out_new);
 
     std::cout << "Done timing the FFTs!\n\n";
+}
+
+// Time the FFT 
+void time_batch_fft() {
+    using std::chrono::duration_cast;
+    using std::chrono::nanoseconds;
+    typedef std::chrono::high_resolution_clock clock;
+    typedef float T;
+
+    const int P = 17;
+    const int N = FFT_LENGTH;
+    std::cout << "Timing the batch FFT on " << P << " vectors of length " << N << "...\n\n";
+    FFTE::std_arrvec<T,P> in_d {};
+    for(int i = 0; i < N; i++) {
+        for(int j = 0; j < P; j++) {
+            auto t = std::complex<T>(2*j*i + i, 2*j*i + 2*i);
+            in_d[j].push_back(t);
+        }
+    }
+    int N_warmup = 0;
+    for(int i = 0; i < N_warmup; i++) batch_fft<P>(in_d, Direction::forward);
+
+    auto start = clock::now();
+    auto out_d = batch_fft<P>(in_d, Direction::forward);
+    auto end = clock::now();
+    std::cout << "The newest tranform takes " << (duration_cast<nanoseconds>(end-start).count()*1.e-9) << "\n";
+    std::cout << "Done timing the batch FFT!\n\n";
 }
 
 void test_FFT_into_csv(std::string filename, int maxsize) {
