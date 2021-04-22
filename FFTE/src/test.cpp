@@ -522,96 +522,114 @@ void test_FFT_into_csv(std::string filename, int maxsize) {
     using std::chrono::duration_cast;
     using std::chrono::nanoseconds;
     typedef std::chrono::high_resolution_clock clock;
-    auto rand = std::bind(std::uniform_real_distribution<>{0.0,10.0}, std::default_random_engine{});
+    auto rand = std::bind(std::uniform_real_distribution<>{1.001,1.075}, std::default_random_engine{});
+    using F = double;
+    const int L = 4;
 
     std::cout << "Timing the current FFT tree configuration against reference...\n";
     std::cout << "Outputting results into " << filename << "\n";
     std::ofstream myfile;
-    Complex<double, 2> *x = (Complex<double, 2>*) malloc(maxsize*sizeof(Complex<double, 2>));
-    Complex<double, 2> *y_new = (Complex<double, 2>*) malloc(maxsize*sizeof(Complex<double, 2>));
-    Complex<double, 2> *y_ctc = (Complex<double, 2>*) malloc(maxsize*sizeof(Complex<double, 2>));
-    Complex<double, 2> *y_dft = (Complex<double, 2>*) malloc(maxsize*sizeof(Complex<double, 2>));
-    for(int i = 0; i < maxsize; i++) x[i] = Complex<double, 2>(rand(),rand());
+
+    Complex<F,L> *x = (Complex<F,L>*) aligned_alloc(alignof(Complex<F,L>), maxsize*sizeof(Complex<F,L>));
+    Complex<F,L> *y = (Complex<F,L>*) aligned_alloc(alignof(Complex<F,L>), maxsize*sizeof(Complex<F,L>));
+    Complex<F,L> *y_dft = (Complex<F,L>*) aligned_alloc(alignof(Complex<F,L>), maxsize*sizeof(Complex<F,L>));
+
+    for(int i = 0; i < maxsize; i++) {
+        auto tmp = std::array<std::complex<F>,L/2> {};
+        for(int j = 0; j < L/2; j++) tmp[j] = std::complex<F> {(F) (2*j), (F) (2*j+1)};
+        x[i] = Complex<F, L> {tmp.data()};
+    }
 
     myfile.open(filename);
-    myfile << "N,FFTE Setup Time(s),FFTE Time (s),Composite FFT Time (s),DFT Time (s),L2 Error\n";
-    for(int N = 10; N < maxsize; N++) {
-        auto start = clock::now();
+    myfile << "N,FFTE,DFT,err\n";
+    
+    const int iter_max = 200;
+    auto dft_max = 1e9;
+    int N = 10;
+    bool do_dft = true;
+    for(int j = 1; (j < iter_max) && (N < maxsize); j++) {
         int ell = getNumNodes(N);
-        biFuncNode<double, 2> root[ell];
+        biFuncNode<F,L> root[ell];
         init_fft_tree(root, N);
         Direction dir = Direction::forward;
-        auto end = clock::now();
-        auto setupTime = duration_cast<nanoseconds>(end-start).count();
 
-        start = clock::now();
-        root->fptr(x, y_new, 1, 1, root, dir);
-        end = clock::now();
+        auto start = clock::now();
+        root->fptr(x, y, 1, 1, root, dir);
+        auto end = clock::now();
         auto myTime = duration_cast<nanoseconds>(end-start).count();
 
-        start = clock::now();
-        reference_composite_FFT(N, x, y_ctc, dir);
-        end = clock::now();
-        auto compositeTime = duration_cast<nanoseconds>(end-start).count();
-
-        start = clock::now();
-        reference_DFT(N, x, y_dft, dir);
-        end = clock::now();
+        if(do_dft){
+            start = clock::now();
+            reference_DFT(N, x, y_dft, dir);
+            end = clock::now();
+        }
         auto dftTime = duration_cast<nanoseconds>(end-start).count();
 
         double err = 0.;
-        for(int j = 0; j < N; j++) {
-            err += (y_new[j]-y_dft[j]).modulus()[0];
+        if(do_dft){
+            for(int j = 0; j < N; j++) {
+                err += (y[j]-y_dft[j]).modulus()[0];
+            }
         }
 
-        myfile << N << "," << setupTime << "," << myTime << "," << compositeTime << "," << dftTime << "," << err << "\n";
+        myfile << N << "," << myTime;
+        if(do_dft){
+            myfile << "," << dftTime << "," << err << "\n";
+        }
+        else {
+            myfile << ",0,0\n";
+        }
+        auto tmp = (int) (((double) N)*rand());
+        N = (tmp > N) ? tmp : 2*N;
+        if(do_dft && (dftTime > dft_max)) do_dft = false;
     }
     myfile.close();
     std::cout << "Finished!\n";
 }
 
 // Compares my complex multiplication to std::complex multiplication
-void time_complex_mult() {
-    std::cout << "Comparing the performance of my Complex<double, 2> multiplication vs. std::complex...\n";
+std::pair<long long int,long long int> time_complex_mult(size_t len, bool at_runtime) {
     using std::chrono::duration_cast;
     using std::chrono::nanoseconds;
     typedef std::chrono::high_resolution_clock clock;
-
-    std::vector<std::complex<double>> stdcomp1 {};
-    std::vector<std::complex<double>> stdcomp2 {};
-    std::vector<Complex<double, 2>> mycomp1 {};
-    std::vector<Complex<double, 2>> mycomp2 {};
+    using F = float;
+    using s_cpx = std::complex<F>;
+    const int n_cpx = 4;
+    using f_cpx = Complex<F,2*n_cpx>;
+    std::vector<std::array<s_cpx, n_cpx>> stdcomp1 {};
+    std::vector<std::array<s_cpx, n_cpx>> stdcomp2 {};
+    complex_vector<F,2*n_cpx> mycomp1 {};
+    complex_vector<F,2*n_cpx> mycomp2 {};
     auto rand = std::bind(std::uniform_real_distribution<>{0.0,10.0}, std::default_random_engine{});
-    size_t len = 5e6;
-    double a,b;
     for(size_t i = 0; i < len; i++) {
-        a = rand(); b = rand();
-        stdcomp1.push_back(std::complex<double>(a, b));
-        mycomp1.push_back(Complex<double, 2>(a, b));
-        a = rand(); b = rand();
-        stdcomp2.push_back(std::complex<double>(a, b));
-        mycomp2.push_back(Complex<double, 2>(a, b));
+        std::array<s_cpx, n_cpx> tmp {};
+        for(int j = 0; j < n_cpx; j++) tmp[j] = s_cpx(rand(), rand());
+        stdcomp1.push_back(tmp);
+        mycomp1.push_back(f_cpx(tmp.data()));
+        for(int j = 0; j < n_cpx; j++) tmp[j] = s_cpx(rand(), rand());
+        stdcomp2.push_back(tmp);
+        mycomp2.push_back(f_cpx(tmp.data()));
     }
 
-    auto start = clock::now();
+    auto start_std = clock::now();
     for(size_t i = 0; i < len; i++) {
-        auto m = stdcomp1[i] * stdcomp2[i];
-        if((void*) (&m) == (void*) 0x123456) std::cout << "aaaa\n";
+        auto r = stdcomp1[i][0] * stdcomp2[i][0];
+        for(int j = 1; j < n_cpx; j++) {
+            r = stdcomp1[i][j] * stdcomp2[i][j];
+        }
+        if(at_runtime) std::cout << r << "\n";
     }
-    auto end = clock::now();
-    auto stdmult = duration_cast<nanoseconds>(end-start).count();
-    std::cout << "Standard mult took " << stdmult << "ns\n";
+    auto end_std = clock::now();
+    auto stdmult = duration_cast<nanoseconds>(end_std - start_std).count();
     
-    start = clock::now();
+    auto start_my = clock::now();
     for(size_t i = 0; i < len; i++) {
-        auto m = mycomp1[i] * mycomp2[i];
-        if((void*) (&m) == (void*) 0x123456) std::cout << "aaaa\n";
+        auto r = mycomp1[i] * mycomp2[i];
+        if(at_runtime) std::cout << r << "\n";
     }
-    end = clock::now();
-    auto mymult = duration_cast<nanoseconds>(end-start).count();
-    std::cout << "My mult took " << mymult << "ns\n";
-    std::cout << "My mult was " << (((float) mymult/ (float) stdmult)) << " times the speed of std\n";
-    std::cout << "Done timing complex multiplication!\n\n";
+    auto end_my = clock::now();
+    auto mymult = duration_cast<nanoseconds>(end_my-start_my).count();
+    return std::pair<long long int, long long int> { stdmult, mymult };
 }
 
 // Times how fast making a tree of uints at compile time is vs. runtime

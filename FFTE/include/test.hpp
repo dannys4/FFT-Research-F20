@@ -41,7 +41,7 @@ void check_batch_fft();
 void time_fft();
 
 // Time complex multiplication
-void time_complex_mult();
+std::pair<long long int, long long int> time_complex_mult(size_t, bool);
 
 // Compare timing of const tree to runtime tree
 // C++14+ only!

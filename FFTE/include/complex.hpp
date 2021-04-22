@@ -169,6 +169,8 @@ namespace FFTE {
             typename pack<F,L>::type var {};
     };
 
+    
+
 
     // Determines how my complex number should be printed to an ostream
     template<typename F, int L>

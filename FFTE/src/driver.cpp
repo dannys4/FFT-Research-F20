@@ -10,17 +10,22 @@ using namespace FFTE;
 using F = float;
 // Main function. Used for calling different parts of the testing code
 int main() {
-    time_batch_fft();
-}
-
-    /* const int n = 2*3*5;
-    const int L = 8;
-    FFTE::complex_vector<F, L> input {};
-    for(int i = 0; i < n; i++) {
-        input.push_back(Complex<F, L> {1.f*i, 2.f*i, 3.f*i, 4.f*i, 5.f*i, 6.f*i, 7.f*i, 8.f*i});
+    const int P = 5;
+    const int Q = 5;
+    auto input = std::array<std::array<std::complex<double>,Q>,P>();
+    for(int p = 0; p < P; p++) {
+        for(int q = 0; q < Q; q++) {
+            input[p][q] = std::complex<double>(p, q);
+            auto eol = (q < (Q-1)) ? ", " : ";\n";
+            std::cout << input[p][q] << eol;
+        }
     }
-    std::cout << "Output:\n";
-    auto output = engine<F, L>::fft(input, FFTE::Direction::inverse);
-    for(int i = 0; i < n; i++) {
-        std::cout  << output[i]/((F) n) << " \n";
-    } */
+
+    auto output = FFTE::fft2(input, FFTE::Direction::forward);
+    for(int p = 0; p < P; p++) {
+        for(int q = 0; q < Q; q++) {
+            auto eol = (q < (Q-1)) ? ", " : ";\n";
+            std::cout << output[p][q] << eol;
+        }
+    }
+}
