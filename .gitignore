@@ -3,6 +3,7 @@
 
 # Re-include everything from the FFTE folder
 !/FFTE/
+!/Poisson/
 
 # Exclude any files looking like this
 /**/.vscode
