@@ -20,12 +20,16 @@ namespace FFTE {
     template<typename F, int L>
     using std_arrvec = std::array<std::vector<std::complex<F>>,L>;
 
+    enum Major {column, row};
+
     // Shortcut to allocate a complex array. This allocates everything aligned in the
     // correct manner.
     template<typename F, int L>
-    Complex<F,L>* complex_alloc(int N) {
-        return (Complex<F,L>*) aligned_alloc(alignof(Complex<F,L>), N*sizeof(Complex<F,L>));
-    }
+    struct complex_alloc {
+        static inline Complex<F,L>* alloc(size_t N) {
+            return (Complex<F,L>*) aligned_alloc(alignof(Complex<F,L>), N*sizeof(Complex<F,L>));
+        }
+    };
 
     // Interface for interacting with the backend of the engine
     template<typename F, int L>
@@ -184,41 +188,105 @@ namespace FFTE {
     }
 
     template<size_t P, size_t Q>
-    std::array<std::array<std::complex<double>,Q>,P> fft2(std::array<std::array<std::complex<double>,Q>,P>& input, Direction dir) {
-        auto out1_ptr = (Complex<double, 2>*) aligned_alloc(alignof(Complex<double,2>), sizeof(Complex<double,2>)*P*Q);
-        auto out2_ptr = (Complex<double, 2>*) aligned_alloc(alignof(Complex<double,2>), sizeof(Complex<double,2>)*P*Q);
+    struct dim2engine {
+        static inline std::array<std::array<std::complex<double>,Q>,P> fft2(std::array<std::array<std::complex<double>,Q>,P>& input, Direction dir, Major maj) {
+            auto out1_ptr = (Complex<double, 2>*) aligned_alloc(alignof(Complex<double,2>), sizeof(Complex<double,2>)*P*Q);
+            auto out2_ptr = (Complex<double, 2>*) aligned_alloc(alignof(Complex<double,2>), sizeof(Complex<double,2>)*P*Q);
 
-        for(size_t p = 0; p < P; p++) {
-            for(size_t q = 0; q < Q; q++) {
-                out1_ptr[Q*p + q] = Complex<double, 2>(&input[p][q]);
+            for(size_t p = 0; p < P; p++) {
+                for(size_t q = 0; q < Q; q++) {
+                    out1_ptr[Q*p + q] = Complex<double, 2>(&input[p][q]);
+                }
             }
-        }
-        
-        #if FFTE_IN_PARALLEL
-        #pragma omp parallel for num_threads(4)
-        #endif
-        for(size_t p = 0; p < P; p++) {
-            engine<double,2>::fft(&out1_ptr[p*Q], &out2_ptr[p], Q, dir, 1, Q);
-        }
+            
+            switch(maj) {
+                case row: 
+                    #if FFTE_IN_PARALLEL
+                    #pragma omp parallel for num_threads(4)
+                    #endif
+                    for(size_t p = 0; p < P; p++) {
+                        engine<double,2>::fft(&out1_ptr[p*Q], &out2_ptr[p], Q, dir, 1, Q);
+                    }
 
-        #if FFTE_IN_PARALLEL
-        #pragma omp parallel for num_threads(4)
-        #endif
-        for(size_t p = 0; p < P; p++) {
-            engine<double,2>::fft(&out2_ptr[p*Q], &out1_ptr[p], Q, dir, 1, Q);
-        }
+                    #if FFTE_IN_PARALLEL
+                    #pragma omp parallel for num_threads(4)
+                    #endif
+                    for(size_t p = 0; p < P; p++) {
+                        engine<double,2>::fft(&out2_ptr[p*Q], &out1_ptr[p], Q, dir, 1, Q);
+                    }
+                    break;
+                case column:
+                    #if FFTE_IN_PARALLEL
+                    #pragma omp parallel for num_threads(4)
+                    #endif
+                    for(size_t p = 0; p < P; p++) {
+                        engine<double,2>::fft(&out1_ptr[p], &out2_ptr[p*Q], Q, dir, Q, 1);
+                    }
+                    break;
 
-        free(out2_ptr);
-        auto output = std::array<std::array<std::complex<double>,Q>,P>();
-        for(size_t p = 0; p < P; p++) {
-            for(size_t q = 0; q < Q; q++) {
-                auto tmp = out1_ptr[Q*p + q].get();
-                output[p][q] = std::complex<double>(tmp[0], tmp[1]);
+                    #if FFTE_IN_PARALLEL
+                    #pragma omp parallel for num_threads(4)
+                    #endif
+                    for(size_t p = 0; p < P; p++) {
+                        engine<double,2>::fft(&out2_ptr[p], &out1_ptr[p*Q], Q, dir, Q, 1);
+                    }
             }
+
+            free(out2_ptr);
+            auto output = std::array<std::array<std::complex<double>,Q>,P>();
+            for(size_t p = 0; p < P; p++) {
+                for(size_t q = 0; q < Q; q++) {
+                    auto tmp = out1_ptr[Q*p + q].get();
+                    output[p][q] = std::complex<double>(tmp[0], tmp[1]);
+                }
+            }
+            free(out1_ptr);
+            return output;
         }
-        free(out1_ptr);
-        return output;
-    }
+
+        static inline Complex<double,2>* fft2(Complex<double,2>* input, Direction dir, Major maj) {
+            auto out1_ptr = (Complex<double, 2>*) aligned_alloc(alignof(Complex<double,2>), sizeof(Complex<double,2>)*P*Q);
+            auto out2_ptr = (Complex<double, 2>*) aligned_alloc(alignof(Complex<double,2>), sizeof(Complex<double,2>)*P*Q);
+            
+            
+            
+            switch(maj) {
+                case row: 
+                    #if FFTE_IN_PARALLEL
+                    #pragma omp parallel for num_threads(4)
+                    #endif
+                    for(size_t p = 0; p < P; p++) {
+                        engine<double,2>::fft(&input[p*Q], &out2_ptr[p], Q, dir, 1, Q);
+                    }
+
+                    #if FFTE_IN_PARALLEL
+                    #pragma omp parallel for num_threads(4)
+                    #endif
+                    for(size_t p = 0; p < P; p++) {
+                        engine<double,2>::fft(&out2_ptr[p*Q], &out1_ptr[p], Q, dir, 1, Q);
+                    }
+                    break;
+                case column:
+                    #if FFTE_IN_PARALLEL
+                    #pragma omp parallel for num_threads(4)
+                    #endif
+                    for(size_t p = 0; p < P; p++) {
+                        engine<double,2>::fft(&input[p], &out2_ptr[p*Q], Q, dir, Q, 1);
+                    }
+                    break;
+
+                    #if FFTE_IN_PARALLEL
+                    #pragma omp parallel for num_threads(4)
+                    #endif
+                    for(size_t p = 0; p < P; p++) {
+                        engine<double,2>::fft(&out2_ptr[p], &out1_ptr[p*Q], Q, dir, Q, 1);
+                    }
+            }
+
+            free(out2_ptr);
+            return out1_ptr;
+        }
+    };
 
     // Perform an arbitrary number of 1-D ffts on doubles
     template<int P>
