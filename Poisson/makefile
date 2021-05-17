@@ -2,7 +2,7 @@ INCDIR=/home/dsharp/Documents/FFT-Research-F20
 CC=g++
 SIMDARGS= -mfma -mavx2 -fopenmp
 STD=11
-CFLAGS=-I$(INCDIR) $(SIMDARGS) -ggdb3 -Wall -std=c++$(STD)
+CFLAGS=-I$(INCDIR) $(SIMDARGS) -Ofast -ffast-math -Wall -std=c++$(STD) -D_P_IDX=$(P)
 SRCDIR=./src
 OBJDIR=$(SRCDIR)/obj
 

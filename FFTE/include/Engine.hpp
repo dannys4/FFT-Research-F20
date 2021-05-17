@@ -6,7 +6,7 @@
 #ifndef FFTE_ENGINE_HPP
 #define FFTE_ENGINE_HPP
 
-#define FFTE_IN_PARALLEL 0
+#define FFTE_IN_PARALLEL 1
 
 #include "algos.hpp"
 #include "allocator.hpp"
@@ -185,6 +185,8 @@ namespace FFTE {
             engine<float, 4>::fft(*(in_ptr+P-1), *(out_ptr+P-1), dir);
         }
         return ret;
+        std::complex<double> g {0., 1.};
+        
     }
 
     template<size_t P, size_t Q>

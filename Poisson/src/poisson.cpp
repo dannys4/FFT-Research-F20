@@ -1,6 +1,9 @@
 #include "/home/dsharp/Documents/FFT-Research-F20/FFTE/include/Engine.hpp"
-#include<array>
-#include<cstring>
+#include <array>
+#include <cstring>
+#include <chrono>
+#include <math.h>
+#include <fstream>
 
 // Domain size, extended domain gridpoints
 const double L  = 1.;
@@ -13,16 +16,10 @@ double h = L / ((double) Ne/2);
 auto h2 = h*h;
 
 double* poisson();
+void poissonPeriodic(std::string);
 
 int main(int argc, char** argv) {
-    auto u = poisson();
-    for(size_t i = 0; i < (m+2); i++) {
-        auto row = &u[i*(m+2)];
-        for(size_t j = 0; j < (m+2); j++) {
-            auto tmp = row[j];
-            std::cout << ((tmp*tmp > eps) ? tmp : 0.) << ((j == (m+1)) ? ";\n" : ", ");
-        }
-    }
+    poissonPeriodic("/mnt/c/Users/danny/Downloads/poissonFFTE.csv");
 }
 
 
@@ -103,6 +100,7 @@ double* poisson() {
             u_row[col] = v_row[col].get()[0]/(Ne*Ne);
         }
     }
+    free(v);
 
     auto err = 0.;
     for(size_t row = 0; row < m; row++) {
@@ -114,6 +112,82 @@ double* poisson() {
     std::cout << "L2 Error: " << err << "\n";
 
     // Free memory allocated
-    free(x); free(y); free(v);
+    free(x); free(y);
     return u;
+}
+
+// Solve a Poisson BVP with periodic conditions
+void poissonPeriodic(std::string filename) {
+    using std::chrono::duration_cast;
+    using std::chrono::nanoseconds;
+    typedef std::chrono::high_resolution_clock clock;
+
+    auto start = clock::now();
+    const int N = 1<< _P_IDX;
+    const double L = 1.;
+    const double sig = 0.1;
+    
+    double h = L/((double) N); // Step size
+    
+    // Boundary conditions
+    auto f_fun = [L,sig](double x, double y){
+        double rsq = (x-0.5*L)*(x-0.5*L) + (y-0.5*L)*(y-0.5*L);
+        double sigsq = sig*sig;
+        return exp(-rsq/(2*sigsq))*(rsq - 2*sigsq)/(sigsq*sigsq);
+    };
+    
+    // Instantiate and initialize A
+    auto A = FFTE::complex_alloc<double,2>::alloc(N*N);
+    for(int row = 0; row < N; row++) {
+        auto A_row = &A[N*row];
+        auto x = ((double) row)*h;
+        for(int col = 0; col < N; col++) {
+            auto y = ((double) col)*h;
+            A_row[col] = FFTE::Complex<double,2> {f_fun(x,y),0.};
+        }
+    }
+    
+    // Get the transform of A
+    auto A_hat = FFTE::dim2engine<N,N>::fft2(A,
+                FFTE::Direction::forward, FFTE::Major::row);
+    
+    // Scale A_hat
+    for(int row = 0; row < N; row++) {
+        auto A_hat_row = &A_hat[N*row];
+        auto xi_1 = (row > N/2 - 1) ? row - N : row;
+        auto xi_1_sq = ((double) xi_1)*((double) xi_1);
+        for(int col = 0; col < N; col++) {
+            auto xi_2 = (col > N/2 - 1) ? col - N : col;
+            auto xi_2_sq = ((double) xi_2)*((double) xi_2);
+            // Delta Matrix entry (j,k)
+            auto D_jk = -L*L/(4.*M_PI*M_PI*(xi_1_sq + xi_2_sq));
+            if(row == 0 && col == 0) D_jk = 1.;
+            // Scale A_hat
+            A_hat_row[col] *= D_jk;
+        }
+    }
+    
+    // Get inverse transform
+    auto U = FFTE::dim2engine<N,N>::fft2(A_hat,
+            FFTE::Direction::inverse, FFTE::Major::row);
+    
+    auto u = (double*) malloc(N*N*sizeof(double));
+    double disp = U[0].get()[0] / ((double) N*N);
+    for(int row = 0; row < N; row++) {
+        auto u_row = &u[row*N];
+        auto U_row = &U[row*N];
+        for(int col = 0; col < N; col++) {
+            // Get real part
+            u_row[col] = U_row[col].get()[0]/((double) N*N) - disp;
+        }
+    }
+    free(A); free(A_hat); free(U);
+    auto end = clock::now();
+    std::ofstream myfile;
+    myfile.open(filename);
+    myfile << "u\n";
+    for(int i = 0; i < N*N; i++) myfile << u[i] << "\n";
+    myfile.close();
+    free(u);
+    std::cout << "p = " << _P_IDX << ", time = " << duration_cast<nanoseconds>(end-start).count()*(1.e-9) << "\n";
 }

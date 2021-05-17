@@ -11,7 +11,11 @@
 #include <iostream>
 
 // Check if we can use modern C++ features
-#define FFTE_MODERN_CPP (defined(__cplusplus) && ((__cplusplus / 100) >= 2014))
+#if (defined(__cplusplus) && ((__cplusplus / 100) >= 2014))
+#define FFTE_MODERN_CPP 1
+#else
+#define FFTE_MODERN_CPP 0
+#endif
 
 namespace FFTE {
     // Need forward declaration for the using directive

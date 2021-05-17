@@ -14,6 +14,7 @@
 /**/.devcontainer
 /**/deprecated/*
 /**/*.ipynb*
+/**/*.py
 
 # make sure to include any gitignore files
 !.gitignore
