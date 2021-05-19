@@ -167,7 +167,7 @@ namespace FFTE {
     };
 
     // Perform an arbitrary number of 1-D ffts on floats
-    template<int P>
+    template<size_t P>
     std_arrvec<float, P> batch_fft(std_arrvec<float, P>& input, Direction dir) {
         std_arrvec<float, P> ret {};
         auto in_ptr = input.data();
@@ -189,6 +189,27 @@ namespace FFTE {
         
     }
 
+    // Perform an arbitrary number of 1-D ffts on doubles
+    template<size_t P>
+    std_arrvec<double, P> batch_fft(std_arrvec<double, P> input, Direction dir) {
+        int p = 0;
+        std_arrvec<double, P> ret {};
+        auto sz = input[0].size();
+        auto in_ptr = input.data();
+        auto out_ptr = ret.data();
+        #if FFTE_IN_PARALLEL
+        #pragma omp parallel for num_threads(4)
+        #endif
+        for(int p = 0; p <= P-2; p += 2) {
+            engine<double,4>::fft(in_ptr+p, out_ptr+p, sz, dir);
+        }
+        if( P % 2 >= 1) {
+            engine<double,2>::fft(in_ptr+P-1, out_ptr+P-1, sz, dir);
+        }
+        return ret;
+    }
+
+    
     template<size_t P, size_t Q>
     struct dim2engine {
         static inline std::array<std::array<std::complex<double>,Q>,P> fft2(std::array<std::array<std::complex<double>,Q>,P>& input, Direction dir, Major maj) {
@@ -290,25 +311,6 @@ namespace FFTE {
         }
     };
 
-    // Perform an arbitrary number of 1-D ffts on doubles
-    template<int P>
-    std_arrvec<double, P> batch_fft(std_arrvec<double, P> input, Direction dir) {
-        int p = 0;
-        std_arrvec<double, P> ret {};
-        auto sz = input[0].size();
-        auto in_ptr = input.data();
-        auto out_ptr = ret.data();
-        #if FFTE_IN_PARALLEL
-        #pragma omp parallel for num_threads(4)
-        #endif
-        for(int p = 0; p <= P-2; p += 2) {
-            engine<double,4>::fft(in_ptr+p, out_ptr+p, sz, dir);
-        }
-        if( P % 2 >= 1) {
-            engine<double,2>::fft(in_ptr+P-1, out_ptr+P-1, sz, dir);
-        }
-        return ret;
-    }
 }
 
 #endif // FFTE_ENGINE_HPP
