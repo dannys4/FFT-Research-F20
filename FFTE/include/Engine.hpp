@@ -175,7 +175,7 @@ namespace FFTE {
         #if FFTE_IN_PARALLEL
         #pragma omp parallel for
         #endif
-        for(int p = 0; p <= P-4; p += 4) {
+        for(size_t p = 0; p <= P-4; p += 4) {
             engine<float, 8>::fft(in_ptr+p, out_ptr+p, dir);
         }
         if(P % 4 >= 2) {
@@ -192,7 +192,6 @@ namespace FFTE {
     // Perform an arbitrary number of 1-D ffts on doubles
     template<size_t P>
     std_arrvec<double, P> batch_fft(std_arrvec<double, P> input, Direction dir) {
-        int p = 0;
         std_arrvec<double, P> ret {};
         auto sz = input[0].size();
         auto in_ptr = input.data();
@@ -200,7 +199,7 @@ namespace FFTE {
         #if FFTE_IN_PARALLEL
         #pragma omp parallel for num_threads(4)
         #endif
-        for(int p = 0; p <= P-2; p += 2) {
+        for(size_t p = 0; p <= P-2; p += 2) {
             engine<double,4>::fft(in_ptr+p, out_ptr+p, sz, dir);
         }
         if( P % 2 >= 1) {
