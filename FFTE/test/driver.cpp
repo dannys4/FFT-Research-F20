@@ -21,7 +21,7 @@ int main() {
         }
     }
 
-    auto output = STOCK_FFT::fft2(input, STOCK_FFT::Direction::forward);
+    auto output = STOCK_FFT::dim2engine<P,Q>::fft2(input, STOCK_FFT::Direction::forward, STOCK_FFT::Major::row);
     for(int p = 0; p < P; p++) {
         for(int q = 0; q < Q; q++) {
             auto eol = (q < (Q-1)) ? ", " : ";\n";
