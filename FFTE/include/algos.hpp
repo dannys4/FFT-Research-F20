@@ -1,8 +1,8 @@
-#ifndef FFTE_ALGOS_HPP
-#define FFTE_ALGOS_HPP
+#ifndef STOCK_FFT_ALGOS_HPP
+#define STOCK_FFT_ALGOS_HPP
 /**
  * Code Author: Danny Sharp
- * This file is part of FFTE (Fast Fourier Transform Engine)
+ * This file is part of STOCK_FFT (Fast Fourier Transform Engine)
  */
 #include "complex.hpp"
 #include "direction.hpp"
@@ -12,12 +12,12 @@
 
 // Check if we can use modern C++ features
 #if (defined(__cplusplus) && ((__cplusplus / 100) >= 2014))
-#define FFTE_MODERN_CPP 1
+#define STOCK_FFT_MODERN_CPP 1
 #else
-#define FFTE_MODERN_CPP 0
+#define STOCK_FFT_MODERN_CPP 0
 #endif
 
-namespace FFTE {
+namespace STOCK_FFT {
     // Need forward declaration for the using directive
     template<typename F, int L>
     class biFuncNode;
@@ -57,7 +57,7 @@ namespace FFTE {
 
     enum fft_type {pow2, pow3, pow4, composite, discrete, rader};
 
-#if FFTE_MODERN_CPP
+#if STOCK_FFT_MODERN_CPP
     // Functor class for performing these transforms
     template<typename F, int L>
     class Fourier_Transform {
@@ -140,4 +140,4 @@ namespace FFTE {
 }
 
 #include "algos_imp.hpp"
-#endif // END FFTE_ALGOS_HPP
+#endif // END STOCK_FFT_ALGOS_HPP

@@ -12,7 +12,7 @@
 #include <cassert>
 #include <fstream>
 
-#if FFTE_MODERN_CPP
+#if STOCK_FFT_MODERN_CPP
 #include "constTree.hpp"
 #else
 #include "tree.hpp"
@@ -20,10 +20,10 @@
 
 
 // Check the error in the FFT in each direction
-void check_fft(FFTE::Direction dir);
+void check_fft(STOCK_FFT::Direction dir);
 
 // Check the error in the FFT for multiple simultaneous packed transforms
-void check_fft_multidim(FFTE::Direction dir);
+void check_fft_multidim(STOCK_FFT::Direction dir);
 
 // Check the way that the FFT branches
 void check_fft_tree();

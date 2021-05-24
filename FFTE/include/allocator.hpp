@@ -1,11 +1,11 @@
-#ifndef FFTE_ALLOCATOR_HPP
-#define FFTE_ALLOCATOR_HPP
+#ifndef STOCK_FFT_ALLOCATOR_HPP
+#define STOCK_FFT_ALLOCATOR_HPP
 
 #include <memory>
 #include <vector>
 #include "complex.hpp"
 
-namespace FFTE{
+namespace STOCK_FFT{
     template<typename F>
     class complex_allocator_t {
         public:
@@ -57,4 +57,4 @@ namespace FFTE{
     template<typename F, int L>
     using complex_vector = std::vector<Complex<F,L>, complex_allocator<F,L>>;
 }
-#endif // FFTE_ALLOCATOR_HPP
+#endif // STOCK_FFT_ALLOCATOR_HPP

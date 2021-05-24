@@ -1,6 +1,6 @@
 /**
  * Code Author: Danny Sharp
- * This file is part of FFTE (Fast Fourier Transform Engine)
+ * This file is part of STOCK_FFT (Fast Fourier Transform Engine)
  */
 
 #include "test.hpp"
@@ -14,7 +14,7 @@
  * or expected values to get their answers, so sometimes (due to floating point
  * inaccuracies), there might be slight discrepencies
  */
-using namespace FFTE;
+using namespace STOCK_FFT;
 
 // Checks how correct the forward Fourier transforms are
 void check_fft(Direction dir) {
@@ -413,7 +413,7 @@ void check_batch_fft() {
     const int P = 7;
     const int N = FFT_LENGTH;
     std::cout << "Checking the batch FFT on " << P << " vectors of length " << N << "...\n\n";
-    FFTE::std_arrvec<T,P> in_d {};
+    STOCK_FFT::std_arrvec<T,P> in_d {};
     for(int i = 0; i < N; i++) {
         for(int j = 0; j < P; j++) {
             auto t = std::complex<T>(2*j*i + i, 2*j*i + 2*i);
@@ -501,7 +501,7 @@ void time_batch_fft() {
     const int P = 17;
     const int N = FFT_LENGTH;
     std::cout << "Timing the batch FFT on " << P << " vectors of length " << N << "...\n\n";
-    FFTE::std_arrvec<T,P> in_d {};
+    STOCK_FFT::std_arrvec<T,P> in_d {};
     for(int i = 0; i < N; i++) {
         for(int j = 0; j < P; j++) {
             auto t = std::complex<T>(2*j*i + i, 2*j*i + 2*i);
@@ -541,7 +541,7 @@ void test_FFT_into_csv(std::string filename, int maxsize) {
     }
 
     myfile.open(filename);
-    myfile << "N,FFTE,DFT,err\n";
+    myfile << "N,STOCK_FFT,DFT,err\n";
     
     const int iter_max = 200;
     auto dft_max = 1e9;

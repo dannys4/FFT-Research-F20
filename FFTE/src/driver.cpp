@@ -4,9 +4,9 @@
 
 /**
  * Code Author: Danny Sharp
- * This file is part of FFTE (Fast Fourier Transform Engine)
+ * This file is part of STOCK_FFT (Fast Fourier Transform Engine)
  */
-using namespace FFTE;
+using namespace STOCK_FFT;
 using F = float;
 // Main function. Used for calling different parts of the testing code
 int main() {
@@ -21,7 +21,7 @@ int main() {
         }
     }
 
-    auto output = FFTE::fft2(input, FFTE::Direction::forward);
+    auto output = STOCK_FFT::fft2(input, STOCK_FFT::Direction::forward);
     for(int p = 0; p < P; p++) {
         for(int q = 0; q < Q; q++) {
             auto eol = (q < (Q-1)) ? ", " : ";\n";

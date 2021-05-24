@@ -1,5 +1,5 @@
 /**
- * Intended to be used for FFTE. Collective inspiration and credit
+ * Intended to be used for STOCK_FFT. Collective inspiration and credit
  * to M. Stoyanov's LibHALA.
  * 
  * github.com/LIBHALA/hala/
@@ -12,7 +12,7 @@
 #include <immintrin.h>
 #include <complex>
 
-namespace FFTE {
+namespace STOCK_FFT {
     // Structs to figure out precise properties of inputs
     template<typename T>
     using is_float = std::is_same<float, typename std::remove_cv<T>::type>;

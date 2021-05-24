@@ -1,9 +1,9 @@
 /* Header file for C++11 and under */
-#ifndef FFTE_TREE_HPP
-#define FFTE_TREE_HPP
+#ifndef STOCK_FFT_TREE_HPP
+#define STOCK_FFT_TREE_HPP
 /**
  * Code Author: Danny Sharp
- * This file is part of FFTE (Fast Fourier Transform Engine)
+ * This file is part of STOCK_FFT (Fast Fourier Transform Engine)
  */
 
 #include "algos.hpp"
@@ -11,17 +11,17 @@
 
 // We use this because it's a variable used in the factor function, so by defining it beforehand,
 // going out of bounds on memory is much harder
-#define FFTE_FACTORS_LEN 200
+#define STOCK_FFT_FACTORS_LEN 200
 
 // This is the minimum signal size for us to use Rader's algorithm
-#define FFTE_RADER_MIN 100000
+#define STOCK_FFT_RADER_MIN 100000
 
-namespace FFTE {
+namespace STOCK_FFT {
     
     /* Statically allocated array of factors that are known at compile-time. These
     * are not necessarily prime, just ordered in the way that we prioritize.
     */
-    static const size_t factors[FFTE_FACTORS_LEN] {   4,    2,    3,    5,    7,   11,   13,   16,   17,   19,
+    static const size_t factors[STOCK_FFT_FACTORS_LEN] {   4,    2,    3,    5,    7,   11,   13,   16,   17,   19,
                                                      23,   29,   31,   37,   41,   43,   47,   53,   59,   61,
                                                      67,   71,   73,   79,   83,   89,   97,  101,  103,  107,
                                                     109,  113,  127,  131,  137,  139,  149,  151,  157,  163,
@@ -42,26 +42,11 @@ namespace FFTE {
                                                    1063, 1069, 1087, 1091, 1093, 1097, 1103, 1109, 1117, 1123,
                                                    1129, 1151, 1153, 1163, 1171, 1181, 1187, 1193, 1201, 1213};
 
-    /* This is a generic class designed to be used as a
-    * compile-time ready tree. It is not used anywhere here
-    * except for debugging purposes
-    */
-    template<typename T>
-    class constBiNode {
-        private:
-        public:
-            T elem;
-            size_t left = 0;
-            size_t right = 0;
-            constBiNode() = default;
-            constBiNode(const T e) {elem = e;}
-    };
-
     // Function to find the smallest usable factor of f at compile-time.
     inline size_t factor(const size_t f) {
         size_t k = 0;
         // Prioritize factors in the factors array
-        for(; k < FFTE_FACTORS_LEN; k++) {
+        for(; k < STOCK_FFT_FACTORS_LEN; k++) {
             if( f % factors[k] == 0) return factors[k];
         }
 
@@ -164,7 +149,7 @@ namespace FFTE {
             return N / k;
         }
         size_t k = factor(N);
-        return (k == N && k > FFTE_RADER_MIN) ? N-1 : k;
+        return (k == N && k > STOCK_FFT_RADER_MIN) ? N-1 : k;
     }
 
     // This is a placeholder for what we need when
@@ -209,7 +194,7 @@ namespace FFTE {
         }
         *k = factor(N);
         if(*k == N) {
-            if(N > FFTE_RADER_MIN) {
+            if(N > STOCK_FFT_RADER_MIN) {
                 *k = N-1;
                 return fft_type::rader;
             }
@@ -258,24 +243,6 @@ namespace FFTE {
         return 1 + left_nodes + right_nodes;
     }
 
-    // Print the nodes of a size_t tree as they're stored in the length N array root
-    inline void printRoot(constBiNode<size_t>* root, size_t N) {
-        std::cout << "root[" << N << "] = ";
-        for(size_t i = 0; i < N; i++) std::cout << root[i].elem << ", ";
-        std::cout << "\n";
-    }
-
-    // Print the nodes using a pre-order traversal
-    inline void printTree(constBiNode<size_t>* root) {
-        std::cout << root->elem;
-        if(!(root->left || root->right)) return;
-        std::cout << ": (";
-        if(root->left)  printTree(root + root->left);
-        std::cout << ", ";
-        if(root->right) printTree(root + root->right);
-        std::cout << ")";
-    }
-
     // print the nodes of an FFT tree using a pre-order traversal
     template<typename F, int L>
     inline void printTree(biFuncNode<F,L>* root) {
@@ -286,20 +253,6 @@ namespace FFTE {
         std::cout << ", ";
         if(root->right) printTree(root + root->right);
         std::cout << ")";
-    }
-
-    // Initialize an unsigned integer tree (useful for debugging the tree construction)
-    inline size_t initUintConstBiTree(constBiNode<size_t>* sRoot, const size_t N) {
-        size_t k = numNodesFactorHelper(N);
-        (*sRoot).elem = N;
-        if (k == N) return 1;
-
-        size_t q = getLeftover(N, k);
-        size_t l = initUintConstBiTree(sRoot + 1, k);
-        size_t r = initUintConstBiTree(sRoot + 1 + l, q);
-        sRoot->left = 1;
-        sRoot->right = 1 + l;
-        return 1 + l + r;
     }
 }
 #endif

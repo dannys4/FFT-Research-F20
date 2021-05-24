@@ -1,22 +1,22 @@
 /**
  * Code Author: Danny Sharp
- * This file is part of FFTE (Fast Fourier Transform Engine)
+ * This file is part of STOCK_FFT (Fast Fourier Transform Engine)
  */
 
-#ifndef FFTE_ENGINE_HPP
-#define FFTE_ENGINE_HPP
+#ifndef STOCK_FFT_ENGINE_HPP
+#define STOCK_FFT_ENGINE_HPP
 
-#define FFTE_IN_PARALLEL 1
+#define STOCK_FFT_IN_PARALLEL 1
 
 #include "algos.hpp"
 #include "allocator.hpp"
-#if FFTE_MODERN_CPP
+#if STOCK_FFT_MODERN_CPP
 #include "constTree.hpp"
 #else
 #include "tree.hpp"
 #endif
 
-namespace FFTE {
+namespace STOCK_FFT {
     template<typename F, int L>
     using std_arrvec = std::array<std::vector<std::complex<F>>,L>;
 
@@ -46,7 +46,7 @@ namespace FFTE {
             engine::fft(input, output, sig_length, dir, 1, 1);
         }
 
-        // Interacting using vectors of FFTE complex numbers
+        // Interacting using vectors of STOCK_FFT complex numbers
         static inline complex_vector<F,L> fft(complex_vector<F,L> input, Direction dir) {
             auto N = input.size();
             auto out = input.get_allocator().allocate(N);
@@ -172,7 +172,7 @@ namespace FFTE {
         std_arrvec<float, P> ret {};
         auto in_ptr = input.data();
         auto out_ptr = ret.data();
-        #if FFTE_IN_PARALLEL
+        #if STOCK_FFT_IN_PARALLEL
         #pragma omp parallel for
         #endif
         for(size_t p = 0; p <= P-4; p += 4) {
@@ -196,7 +196,7 @@ namespace FFTE {
         auto sz = input[0].size();
         auto in_ptr = input.data();
         auto out_ptr = ret.data();
-        #if FFTE_IN_PARALLEL
+        #if STOCK_FFT_IN_PARALLEL
         #pragma omp parallel for num_threads(4)
         #endif
         for(size_t p = 0; p <= P-2; p += 2) {
@@ -223,14 +223,14 @@ namespace FFTE {
             
             switch(maj) {
                 case row: 
-                    #if FFTE_IN_PARALLEL
+                    #if STOCK_FFT_IN_PARALLEL
                     #pragma omp parallel for num_threads(4)
                     #endif
                     for(size_t p = 0; p < P; p++) {
                         engine<double,2>::fft(&out1_ptr[p*Q], &out2_ptr[p], Q, dir, 1, Q);
                     }
 
-                    #if FFTE_IN_PARALLEL
+                    #if STOCK_FFT_IN_PARALLEL
                     #pragma omp parallel for num_threads(4)
                     #endif
                     for(size_t p = 0; p < P; p++) {
@@ -238,7 +238,7 @@ namespace FFTE {
                     }
                     break;
                 case column:
-                    #if FFTE_IN_PARALLEL
+                    #if STOCK_FFT_IN_PARALLEL
                     #pragma omp parallel for num_threads(4)
                     #endif
                     for(size_t p = 0; p < P; p++) {
@@ -246,7 +246,7 @@ namespace FFTE {
                     }
                     break;
 
-                    #if FFTE_IN_PARALLEL
+                    #if STOCK_FFT_IN_PARALLEL
                     #pragma omp parallel for num_threads(4)
                     #endif
                     for(size_t p = 0; p < P; p++) {
@@ -274,14 +274,14 @@ namespace FFTE {
             
             switch(maj) {
                 case row: 
-                    #if FFTE_IN_PARALLEL
+                    #if STOCK_FFT_IN_PARALLEL
                     #pragma omp parallel for num_threads(4)
                     #endif
                     for(size_t p = 0; p < P; p++) {
                         engine<double,2>::fft(&input[p*Q], &out2_ptr[p], Q, dir, 1, Q);
                     }
 
-                    #if FFTE_IN_PARALLEL
+                    #if STOCK_FFT_IN_PARALLEL
                     #pragma omp parallel for num_threads(4)
                     #endif
                     for(size_t p = 0; p < P; p++) {
@@ -289,7 +289,7 @@ namespace FFTE {
                     }
                     break;
                 case column:
-                    #if FFTE_IN_PARALLEL
+                    #if STOCK_FFT_IN_PARALLEL
                     #pragma omp parallel for num_threads(4)
                     #endif
                     for(size_t p = 0; p < P; p++) {
@@ -297,7 +297,7 @@ namespace FFTE {
                     }
                     break;
 
-                    #if FFTE_IN_PARALLEL
+                    #if STOCK_FFT_IN_PARALLEL
                     #pragma omp parallel for num_threads(4)
                     #endif
                     for(size_t p = 0; p < P; p++) {
@@ -312,4 +312,4 @@ namespace FFTE {
 
 }
 
-#endif // FFTE_ENGINE_HPP
+#endif // STOCK_FFT_ENGINE_HPP

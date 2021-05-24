@@ -1,9 +1,9 @@
 /**
  * Code Author: Danny Sharp
- * This file is part of FFTE (Fast Fourier Transform Engine)
+ * This file is part of STOCK_FFT (Fast Fourier Transform Engine)
  */
 #include <iostream>
-namespace FFTE {
+namespace STOCK_FFT {
 
     // Recursive helper function implementing a classic C-T FFT
 	template<typename F, int L>

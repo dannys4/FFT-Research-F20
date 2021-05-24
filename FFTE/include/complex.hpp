@@ -1,10 +1,10 @@
 /**
  * Code Author: Danny Sharp
- * This file is part of FFTE (Fast Fourier Transform Engine)
+ * This file is part of STOCK_FFT (Fast Fourier Transform Engine)
  */
 
-#ifndef FFTE_COMPLEX_HPP
-#define FFTE_COMPLEX_HPP
+#ifndef STOCK_FFT_COMPLEX_HPP
+#define STOCK_FFT_COMPLEX_HPP
 #include <type_traits>
 #include <iostream>
 #include "vec_types.hpp"
@@ -13,7 +13,7 @@
  * This file holds the tools of using Complex numbers in a templated fashion
  * using vectorized intrinsics.
  */
-namespace FFTE {
+namespace STOCK_FFT {
     template<typename F, int L>
     class alignas(L*sizeof(F)) Complex {
         public:
@@ -188,4 +188,4 @@ namespace FFTE {
     }
 }
 
-#endif // FFTE_COMPLEX_HPP
+#endif // STOCK_FFT_COMPLEX_HPP
