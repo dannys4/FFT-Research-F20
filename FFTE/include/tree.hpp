@@ -3,7 +3,7 @@
 #define STOCK_FFT_TREE_HPP
 /**
  * Code Author: Danny Sharp
- * This file is part of STOCK_FFT (Fast Fourier Transform Engine)
+ * This file is part of the implementation for a stock FFT algorithm intended for HeFFTe
  */
 
 #include "algos.hpp"
@@ -18,9 +18,8 @@
 
 namespace STOCK_FFT {
     
-    /* Statically allocated array of factors that are known at compile-time. These
-    * are not necessarily prime, just ordered in the way that we prioritize.
-    */
+    // Statically allocated array of factors that are known at compile-time. These
+    // are not necessarily prime, just ordered in the way that we prioritize.
     static const size_t factors[STOCK_FFT_FACTORS_LEN] {   4,    2,    3,    5,    7,   11,   13,   16,   17,   19,
                                                      23,   29,   31,   37,   41,   43,   47,   53,   59,   61,
                                                      67,   71,   73,   79,   83,   89,   97,  101,  103,  107,
@@ -203,9 +202,8 @@ namespace STOCK_FFT {
         return fft_type::composite;
     }
 
-    /* Initialize an fft tree given an appropriately sized empty array of 
-    * function nodes to hold the information
-    */
+    // Initialize an fft tree given an appropriately sized
+    // empty array of function nodes to hold the information
     template<typename F, int L>
     inline size_t init_fft_tree(biFuncNode<F,L>* sRoot, const size_t N) {
         size_t k = 0;

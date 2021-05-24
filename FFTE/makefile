@@ -3,7 +3,7 @@ CC=g++
 SIMDARGS= -mfma -mavx2 -fopenmp
 STD=11
 CFLAGS=-I$(INCDIR) $(SIMDARGS) -ggdb3 -Wall -std=c++$(STD)
-SRCDIR=./src
+SRCDIR=./test
 OBJDIR=$(SRCDIR)/obj
 
 LIBS=

@@ -2,20 +2,15 @@
 #define STOCK_FFT_ALGOS_HPP
 /**
  * Code Author: Danny Sharp
- * This file is part of STOCK_FFT (Fast Fourier Transform Engine)
+ * This file is part of STOCK_FFT
+ * 
+ * This file is intended to declare the interface for the algorithms used
  */
 #include "complex.hpp"
 #include "direction.hpp"
 #include <cmath>
 #include <vector>
 #include <iostream>
-
-// Check if we can use modern C++ features
-#if (defined(__cplusplus) && ((__cplusplus / 100) >= 2014))
-#define STOCK_FFT_MODERN_CPP 1
-#else
-#define STOCK_FFT_MODERN_CPP 0
-#endif
 
 namespace STOCK_FFT {
     // Need forward declaration for the using directive
@@ -41,7 +36,6 @@ namespace STOCK_FFT {
     template<typename F, int L>
     inline void reference_DFT(size_t N, Complex<F,L>* x, Complex<F,L>* y, Direction dir);
 
-
     template<typename F, int L>
     inline void composite_FFT(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sRoot, Direction dir);
 
@@ -57,44 +51,6 @@ namespace STOCK_FFT {
 
     enum fft_type {pow2, pow3, pow4, composite, discrete, rader};
 
-#if STOCK_FFT_MODERN_CPP
-    // Functor class for performing these transforms
-    template<typename F, int L>
-    class Fourier_Transform {
-        private:
-            fft_type type;
-        public:
-            constexpr Fourier_Transform(fft_type fft): type(fft) {}
-            constexpr Fourier_Transform(Fourier_Transform& fft): type(fft.type) {}
-            void operator()(Complex<F,L>* x, Complex<F,L>* y, size_t s_in, size_t s_out, biFuncNode<F,L>* sRoot, Direction dir) {
-                switch(type) {
-                    case fft_type::pow2: pow2_FFT(x, y, s_in, s_out, sRoot, dir); break;
-                    case fft_type::pow3: pow3_FFT(x, y, s_in, s_out, sRoot, dir); break;
-                    case fft_type::pow4: pow2_FFT(x, y, s_in, s_out, sRoot, dir); break;
-                    case fft_type::composite: composite_FFT(x, y, s_in, s_out, sRoot, dir); break;
-                    case fft_type::discrete: DFT(x, y, s_in, s_out, sRoot, dir); break;
-                    default: std::cerr << "This is not supported or implemented yet\n"; exit(-1);
-                }
-            }
-    };
-
-    /* A class to map out what the call-graph of the FFT will look like, then
-    * hold it in memory for the FFTs. Theoretically, it's compile-time ready.
-    * However, due to the way that compilers work, this may or may not happen.
-    */
-    template<typename F, int L>
-    class biFuncNode {
-        public:
-            Fourier_Transform<F,L> fptr; // FFT for this call
-            size_t sz = 0;         // Size of FFT
-            size_t left = 0;       // Offset in array until left child
-            size_t right = 0;      // Offset in array until right child
-            constexpr biFuncNode(): fptr(fft_type::discrete) {};
-            constexpr biFuncNode(fft_type type): fptr(type) {}; // Create default constructor
-            constexpr biFuncNode operator=(const biFuncNode& o) {fptr = o.fptr; return *this;}
-    };
-
-#else
     // Functor class for performing these transforms
     template<typename F, int L>
     class Fourier_Transform {
@@ -136,7 +92,6 @@ namespace STOCK_FFT {
             biFuncNode(size_t a, size_t ainv): fptr(a,ainv) {};
             biFuncNode<F,L> operator=(const biFuncNode<F,L> o) {fptr = o.fptr; return *this;}
     };
-#endif // END DECISIONS BASED ON WHETHER C++14+
 }
 
 #include "algos_imp.hpp"

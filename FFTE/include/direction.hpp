@@ -1,6 +1,6 @@
 /**
  * Code Author: Danny Sharp
- * This file is part of STOCK_FFT (Fast Fourier Transform Engine)
+ * This file is part of the implementation for a stock FFT algorithm intended for HeFFTe
  */
 
 #ifndef DIRECTION_HPP
