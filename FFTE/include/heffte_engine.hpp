@@ -6,8 +6,6 @@
 #ifndef STOCK_FFT_ENGINE_HPP
 #define STOCK_FFT_ENGINE_HPP
 
-#define STOCK_FFT_IN_PARALLEL 1
-
 #include "algos.hpp"
 #include "allocator.hpp"
 #include "tree.hpp"
