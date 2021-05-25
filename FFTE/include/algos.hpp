@@ -12,7 +12,7 @@
 #include <vector>
 #include <iostream>
 
-namespace STOCK_FFT {
+namespace stock_fft {
     // Need forward declaration for the using directive
     template<typename F, int L>
     class biFuncNode;

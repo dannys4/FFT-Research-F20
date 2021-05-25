@@ -3,7 +3,7 @@
  * This file is part of the implementation for a stock FFT algorithm intended for HeFFTe
  */
 #include <iostream>
-namespace STOCK_FFT {
+namespace stock_fft {
 
     // Recursive helper function implementing a classic C-T FFT
 	template<typename F, int L>

@@ -12,7 +12,7 @@
 #include <immintrin.h>
 #include <complex>
 
-namespace STOCK_FFT {
+namespace stock_fft {
     // Structs to figure out precise properties of inputs
     template<typename T>
     using is_float = std::is_same<float, typename std::remove_cv<T>::type>;

@@ -6,7 +6,7 @@
  * Code Author: Danny Sharp
  * This file is part of the implementation for a stock FFT algorithm intended for HeFFTe
  */
-using namespace STOCK_FFT;
+using namespace stock_fft;
 using F = float;
 // Main function. Used for calling different parts of the testing code
 int main() {

@@ -13,7 +13,7 @@
  * This file holds the tools of using Complex numbers in a templated fashion
  * using vectorized intrinsics.
  */
-namespace STOCK_FFT {
+namespace stock_fft {
     template<typename F, int L>
     class alignas(L*sizeof(F)) Complex {
         public:

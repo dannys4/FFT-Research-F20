@@ -13,8 +13,6 @@
 #include "tree.hpp"
 
 namespace stock_fft {
-    template<typename F, int L>
-    using std_arrvec = std::array<std::vector<std::complex<F>>,L>;
 
     enum Major {column, row};
 
@@ -52,6 +50,10 @@ namespace stock_fft {
             root->fptr(input.data(), out, 1, 1, root, dir);
             auto ret = complex_vector<F,L> (out, out+N);
             return ret;
+        }
+
+        static inline std::complex<F>* fft(std::complex<F>* input, size_t N, Direction dir) {
+
         }
 
         // Interacting using vectors of std::complex numbers
@@ -308,4 +310,4 @@ namespace stock_fft {
 
 }
 
-#endif // STOCK_FFT_ENGINE_HPP
+#endif // STOCK_FFT_HEFFTE_ENGINE_HPP

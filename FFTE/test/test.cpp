@@ -14,7 +14,7 @@
  * or expected values to get their answers, so sometimes (due to floating point
  * inaccuracies), there might be slight discrepencies
  */
-using namespace STOCK_FFT;
+using namespace stock_fft;
 
 // Checks how correct the forward Fourier transforms are
 void check_fft(Direction dir) {

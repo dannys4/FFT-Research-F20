@@ -5,7 +5,7 @@
 #include <vector>
 #include "complex.hpp"
 
-namespace STOCK_FFT{
+namespace stock_fft{
     template<typename F>
     class complex_allocator_t {
         public:

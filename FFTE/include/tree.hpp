@@ -16,7 +16,7 @@
 // This is the minimum signal size for us to use Rader's algorithm
 #define STOCK_FFT_RADER_MIN 100000
 
-namespace STOCK_FFT {
+namespace stock_fft {
     
     // Statically allocated array of factors that are known at compile-time. These
     // are not necessarily prime, just ordered in the way that we prioritize.
