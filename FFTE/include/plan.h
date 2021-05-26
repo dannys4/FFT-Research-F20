@@ -48,24 +48,35 @@ namespace stock_fft {
 
         void execute(std::complex<double> data[]) {
             // TODO: Incorporate OMP
+
+            // Allocate input and output temporary arrays
             auto inp = complex_alloc<double,4>::alloc(N);
             auto out = complex_alloc<double,4>::alloc(N);
+
+            // Perform batch transform on everything save for the remainder
             for(int p = 0; p < P-1; p += 2) {
+                // Convert types
                 for(int i = 0; i < N; i++) {
                     auto idx = p*dist + i*stride;
                     inp[i] = Complex<double, 4> {data[idx], data[idx+dist]};
                 }
+                // Perform fft
                 root->fptr(inp, out, 1, 1, root, dir);
+                // Convert type back
                 for(int i = 0; i < N; i++) {
                     auto idx = p*dist + i*stride;
                     auto arr = reinterpret_cast<std::complex<double>*>(&out[i]);
                     data[idx] = arr[0]; data[idx+dist] = arr[1];
                 }
             }
+
+            // Handle remainder
             if(P%2 == 1) {
+                // Init p for ease of use
                 auto p = P-1;
                 for(int i = 0; i < N; i++) {
                     auto idx = p*dist + i*stride;
+                    // Second column is all zeros
                     inp[i] = Complex<double, 4> {data[idx], std::complex<double> {}};
                 }
                 root->fptr(inp, out, 1, 1, root, dir);
