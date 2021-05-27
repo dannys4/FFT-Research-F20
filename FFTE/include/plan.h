@@ -26,11 +26,11 @@ namespace stock_fft {
 
     // Create fft plan for single precision
     struct stock_fft_plan_dft<float> {
-        size_t N, P, stride, dist; Direction dir;
+        size_t N, P, stride, idist, odist; Direction dir;
         biFuncNode<float, 8>* root;
         stock_fft_plan_dft(size_t N, int P, int stride,
-                        int dist, Direction dir):
-                        N(N), P(P), stride(stride), dist(dist), dir(dir) {
+                        int idist, int odist, Direction dir):
+                        N(N), P(P), stride(stride), idist(idist), odist(odist), dir(dir) {
             int numNodes = getNumNodes(N);
             root = new biFuncNode<float, 8>[numNodes];
             init_fft_tree(root, N);
@@ -47,18 +47,18 @@ namespace stock_fft {
             for(int p = 0; p < P-3; p += 4) {
                 // Convert types
                 for(int i = 0; i < N; i++) {
-                    auto idx = p*dist + i*stride;
-                    inp[i] = Complex<float, 8> {data[idx+0*dist], data[idx+1*dist],
-                                                data[idx+2*dist], data[idx+3*dist]};
+                    auto idx = p*idist + i*stride;
+                    inp[i] = Complex<float, 8> {data[idx+0*idist], data[idx+1*idist],
+                                                data[idx+2*idist], data[idx+3*idist]};
                 }
                 // Perform fft
                 root->fptr(inp, out, 1, 1, root, dir);
                 // Convert type back
                 for(int i = 0; i < N; i++) {
-                    auto idx = p*dist + i*stride;
+                    auto idx = p*odist + i*stride;
                     auto arr = reinterpret_cast<std::complex<float>*>(&out[i]);
-                    data[idx+0*dist] = arr[0]; data[idx+1*dist] = arr[1];
-                    data[idx+2*dist] = arr[2]; data[idx+3*dist] = arr[3];
+                    data[idx+0*odist] = arr[0]; data[idx+1*odist] = arr[1];
+                    data[idx+2*odist] = arr[2]; data[idx+3*odist] = arr[3];
                 }
             }
 
@@ -68,23 +68,23 @@ namespace stock_fft {
                 // Init p for ease of use
                 auto p = P - K;
                 for(int i = 0; i < N; i++) {
-                    auto idx = p*dist + i*stride;
+                    auto idx = p*idist + i*stride;
                     // remainder columns are all zeros
                     auto z = std::complex<float> {};
                     switch(K) {
-                        case 1: inp[i] = Complex<float,8> {data[idx+0*dist],
+                        case 1: inp[i] = Complex<float,8> {data[idx+0*idist],
                                                            z,
                                                            z,
                                                            z};
                                 break;
-                        case 2: inp[i] = Complex<float,8> {data[idx+0*dist],
-                                                           data[idx+1*dist],
+                        case 2: inp[i] = Complex<float,8> {data[idx+0*idist],
+                                                           data[idx+1*idist],
                                                            z,
                                                            z};
                                 break;
-                        case 3: inp[i] = Complex<float,8> {data[idx+0*dist],
-                                                           data[idx+1*dist],
-                                                           data[idx+2*dist],
+                        case 3: inp[i] = Complex<float,8> {data[idx+0*idist],
+                                                           data[idx+1*idist],
+                                                           data[idx+2*idist],
                                                            z};
                                 break;
                         default: throw std::runtime_error("Something went wrong in stock fft!\n");
@@ -92,11 +92,11 @@ namespace stock_fft {
                 }
                 root->fptr(inp, out, 1, 1, root, dir);
                 for(int i = 0; i < N; i++) {
-                    auto idx = p*dist + i*stride;
+                    auto idx = p*odist + i*stride;
                     auto arr = reinterpret_cast<std::complex<double>*>(&out[i]);
                     // Only need first k columns
                     for(int k = 0; k < K; k++) {
-                        data[idx + k*dist] = arr[k];
+                        data[idx + k*odist] = arr[k];
                     }
                 }
             }
@@ -108,13 +108,13 @@ namespace stock_fft {
 
     // Create fft plan struct for double precision
     struct stock_fft_plan_dft<double> {
-        size_t N, P, stride, dist; Direction dir;
+        size_t N, P, stride, idist, odist; Direction dir;
         biFuncNode<double, 4>* root;
 
         // Constructor for plan, initializes root
         stock_fft_plan_dft(size_t N, int P, int stride,
-                        int dist, Direction dir):
-                        N(N), P(P), stride(stride), dist(dist), dir(dir) {
+                        int idist, int odist, Direction dir):
+                        N(N), P(P), stride(stride), idist(idist), odist(odist), dir(dir) {
             int numNodes = getNumNodes(N);
             root = new biFuncNode<double, 4>[numNodes];
             init_fft_tree(root, N);
@@ -132,16 +132,16 @@ namespace stock_fft {
             for(int p = 0; p < P-1; p += 2) {
                 // Convert types
                 for(int i = 0; i < N; i++) {
-                    auto idx = p*dist + i*stride;
-                    inp[i] = Complex<double, 4> {data[idx], data[idx+dist]};
+                    auto idx = p*idist + i*stride;
+                    inp[i] = Complex<double, 4> {data[idx], data[idx+idist]};
                 }
                 // Perform fft
                 root->fptr(inp, out, 1, 1, root, dir);
                 // Convert type back
                 for(int i = 0; i < N; i++) {
-                    auto idx = p*dist + i*stride;
+                    auto idx = p*odist + i*stride;
                     auto arr = reinterpret_cast<std::complex<double>*>(&out[i]);
-                    data[idx] = arr[0]; data[idx+dist] = arr[1];
+                    data[idx] = arr[0]; data[idx+odist] = arr[1];
                 }
             }
 
@@ -150,13 +150,13 @@ namespace stock_fft {
                 // Init p for ease of use
                 auto p = P-1;
                 for(int i = 0; i < N; i++) {
-                    auto idx = p*dist + i*stride;
+                    auto idx = p*idist + i*stride;
                     // Second column is all zeros
                     inp[i] = Complex<double, 4> {data[idx], std::complex<double> {}};
                 }
                 root->fptr(inp, out, 1, 1, root, dir);
                 for(int i = 0; i < N; i++) {
-                    auto idx = p*dist + i*stride;
+                    auto idx = p*odist + i*stride;
                     auto arr = reinterpret_cast<std::complex<double>*>(&out[i]);
                     // Only need first column
                     data[idx] = arr[0];
