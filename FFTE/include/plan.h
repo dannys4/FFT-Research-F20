@@ -101,7 +101,70 @@ namespace stock_fft {
                 }
             }
         }
+        void execute(float idata[], std::complex<float> odata[]) {
+            // TODO: Incorporate OMP
 
+            // Allocate input and output temporary arrays
+            auto inp = complex_alloc<float,8>::alloc(N);
+            auto out = complex_alloc<float,8>::alloc(N);
+
+            // Perform batch transform on everything save for the remainder
+            for(int p = 0; p < P-3; p += 4) {
+                // Convert types
+                for(int i = 0; i < N; i++) {
+                    auto idx = p*idist + i*stride;
+                    inp[i] = Complex<float, 8> {idata[idx+0*idist], 0, idata[idx+1*idist], 0,
+                                                idata[idx+2*idist], 0, idata[idx+3*idist], 0};
+                }
+                // Perform fft
+                root->fptr(inp, out, 1, 1, root, dir);
+                // Convert type back
+                for(int i = 0; i < N; i++) {
+                    auto idx = p*odist + i*stride;
+                    auto arr = reinterpret_cast<std::complex<float>*>(&out[i]);
+                    odata[idx+0*odist] = arr[0]; odata[idx+1*odist] = arr[1];
+                    odata[idx+2*odist] = arr[2]; odata[idx+3*odist] = arr[3];
+                }
+            }
+
+            // Handle remainder
+            if(P%4 > 0) {
+                auto K = P % 4;
+                // Init p for ease of use
+                auto p = P - K;
+                for(int i = 0; i < N; i++) {
+                    auto idx = p*idist + i*stride;
+                    // remainder columns are all zeros
+                    switch(K) {
+                        case 1: inp[i] = Complex<float,8> {idata[idx+0*idist], 0,
+                                                           0                 , 0,
+                                                           0                 , 0,
+                                                           0                 , 0};
+                                break;
+                        case 2: inp[i] = Complex<float,8> {idata[idx+0*idist], 0,
+                                                           idata[idx+1*idist], 0,
+                                                           0                 , 0,
+                                                           0                 , 0};
+                                break;
+                        case 3: inp[i] = Complex<float,8> {idata[idx+0*idist], 0,
+                                                           idata[idx+1*idist], 0,
+                                                           idata[idx+2*idist], 0,
+                                                           0                 , 0};
+                                break;
+                        default: throw std::runtime_error("Something went wrong in stock fft!\n");
+                    }
+                }
+                root->fptr(inp, out, 1, 1, root, dir);
+                for(int i = 0; i < N; i++) {
+                    auto idx = p*odist + i*stride;
+                    auto arr = reinterpret_cast<std::complex<double>*>(&out[i]);
+                    // Only need first k columns
+                    for(int k = 0; k < K; k++) {
+                        odata[idx + k*odist] = arr[k];
+                    }
+                }
+            }
+        }
         // Destructor
         ~stock_fft_plan_dft() { delete[] root; }
     };
@@ -160,6 +223,50 @@ namespace stock_fft {
                     auto arr = reinterpret_cast<std::complex<double>*>(&out[i]);
                     // Only need first column
                     data[idx] = arr[0];
+                }
+            }
+        }
+
+        // Executes the plan on given data
+        void execute(double idata[], std::complex<double> odata[]) {
+            // TODO: Incorporate OMP
+
+            // Allocate input and output temporary arrays
+            auto inp = complex_alloc<double,4>::alloc(N);
+            auto out = complex_alloc<double,4>::alloc(N);
+
+            // Perform batch transform on everything save for the remainder
+            for(int p = 0; p < P-1; p += 2) {
+                // Convert types
+                for(int i = 0; i < N; i++) {
+                    auto idx = p*idist + i*stride;
+                    inp[i] = Complex<double, 4> {idata[idx], 0, idata[idx+idist], 0};
+                }
+                // Perform fft
+                root->fptr(inp, out, 1, 1, root, dir);
+                // Convert type back
+                for(int i = 0; i < N; i++) {
+                    auto idx = p*odist + i*stride;
+                    auto arr = reinterpret_cast<std::complex<double>*>(&out[i]);
+                    odata[idx] = arr[0]; odata[idx+odist] = arr[1];
+                }
+            }
+
+            // Handle remainder
+            if(P%2 == 1) {
+                // Init p for ease of use
+                auto p = P-1;
+                for(int i = 0; i < N; i++) {
+                    auto idx = p*idist + i*stride;
+                    // Second column is all zeros
+                    inp[i] = Complex<double, 4> {idata[idx], 0, 0, 0};
+                }
+                root->fptr(inp, out, 1, 1, root, dir);
+                for(int i = 0; i < N; i++) {
+                    auto idx = p*odist + i*stride;
+                    auto arr = reinterpret_cast<std::complex<double>*>(&out[i]);
+                    // Only need first column
+                    odata[idx] = arr[0];
                 }
             }
         }
