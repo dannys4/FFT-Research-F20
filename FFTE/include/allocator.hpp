@@ -39,7 +39,7 @@ namespace stock_fft{
                 return ret;
             }
             inline void deallocate(pointer p, size_type) {
-                return free(p);
+                free(p);
             };
 
             inline void construct(pointer p, const_reference value) { new (p) value_type(value); }
